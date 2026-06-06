@@ -1,0 +1,144 @@
+/* Full page layout */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: #e4e9f0;
+}
+
+/* Main content area should expand */
+.main-content {
+  flex: 1 0 auto;
+}
+
+/* ============================================
+  NEUMORPHIC FOOTER
+  ============================================ */
+.app-footer {
+  background: #e4e9f0;
+  padding: 20px 20px;
+  font-size: 14px;
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: auto;
+  box-shadow: 
+  0 -8px 16px rgba(163, 177, 198, 0.3),
+  0 -4px 8px rgba(255, 255, 255, 0.5);
+  position: relative;
+}
+
+/* Neumorphic top border effect */
+.app-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  height: 3px;
+  background: #e4e9f0;
+  box-shadow: 
+  inset 2px 2px 4px rgba(163, 177, 198, 0.4),
+  inset -2px -2px 4px rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+}
+
+/* Footer content with centered text */
+.footer-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-width: 0;
+  gap: 15px;
+  position: relative;
+}
+
+/* Neumorphic footer text */
+.footer-text {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #1c236d;
+  font-weight: 500;
+  text-align: center;
+  flex-grow: 1;
+  text-shadow: 1px 1px 2px rgba(163, 177, 198, 0.2);
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Neumorphic version badge */
+.version-badge {
+  background: #e4e9f0;
+  padding: 6px 14px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 12px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  position: absolute;
+  right: 0;
+  box-shadow: 
+  4px 4px 8px rgba(163, 177, 198, 0.5),
+  -4px -4px 8px rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.version-badge:hover {
+  box-shadow: 
+  inset 4px 4px 8px rgba(163, 177, 198, 0.5),
+  inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-footer {
+  padding: 15px;
+  font-size: 13px;
+}
+
+  .app-footer::before {
+  width: 85%;
+}
+
+  .footer-text {
+  font-size: 12px;
+}
+
+  .version-badge {
+  font-size: 10px;
+  padding: 5px 10px;
+}
+}
+
+@media (max-width: 480px) {
+  .app-footer {
+  padding: 12px;
+}
+
+  .footer-content {
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+  
+  .version-badge {
+  position: static;
+  margin-top: 5px;
+}
+
+  .app-footer::before {
+  width: 80%;
+  height: 2px;
+}
+}
