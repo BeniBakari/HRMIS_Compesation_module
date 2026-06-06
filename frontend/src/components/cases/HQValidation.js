@@ -132,6 +132,10 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
   const [fetchingDocs, setFetchingDocs] = useState(true);
   const [previewDoc,   setPreviewDoc]   = useState(null);
 
+  // ── NEW: Added for RETURNED & REJECTED confirmation ─────────────────────
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingDecision, setPendingDecision] = useState(null);
+
   // ── Load documents ──────────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
@@ -188,6 +192,31 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
     return '';
   };
 
+  // ── NEW: Dynamic Submit Button Text ─────────────────────────────────────
+  const getSubmitButtonText = () => {
+    if (decision === 'RETURNED') return 'RETURN TO RPC';
+    if (decision === 'REJECTED') return 'REJECT APPLICATION';
+    if (isHQ)    return 'SUBMIT TO CO REVIEW';
+    if (isCO)    return 'SUBMIT TO SO REVIEW';
+    if (isSO)    return 'SUBMIT TO CHIEF APPROVAL';
+    if (isChief) return 'SUBMIT TO CP_HRM OFFICE';
+    return 'SUBMIT DECISION';
+  };
+
+  // ── NEW: Dynamic Submit Button Colors ───────────────────────────────────
+  const getSubmitButtonStyle = () => {
+    if (decision === 'APPROVED') {
+      return { background: '#166534', color: 'white', borderColor: '#166534' };
+    }
+    if (decision === 'RETURNED') {
+      return { background: '#92400e', color: 'white', borderColor: '#92400e' };
+    }
+    if (decision === 'REJECTED') {
+      return { background: '#991b1b', color: 'white', borderColor: '#991b1b' };
+    }
+    return {}; // default
+  };
+
   // ── CO only: verify/unverify a document ────────────────────────────────────
   const handleDocVerify = async (docId, verified) => {
     try {
@@ -200,7 +229,7 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
     }
   };
 
-  // ── Submit decision ─────────────────────────────────────────────────────────
+  // ── NEW: Submit with confirmation for RETURNED & REJECTED ─────────────────
   const handleSubmit = async () => {
     setError('');
     if (!decision)     return setError('Please select a decision.');
@@ -212,15 +241,35 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
         return setError(`${unverified.length} document(s) are not yet verified. Verify all before approving.`);
     }
 
+    // Added logic: Show confirmation for RETURNED and REJECTED
+    if (decision === 'RETURNED' || decision === 'REJECTED') {
+      setPendingDecision({ decision, notes });
+      setShowConfirm(true);
+      return;
+    }
+
+    // Direct submit for APPROVED
+    await performSubmit(decision, notes);
+  };
+
+  const performSubmit = async (dec, justification) => {
     setLoading(true);
     try {
-      await casesApi.hqReview(caseId, getEndpoint(), { decision, notes });
+      await casesApi.hqReview(caseId, getEndpoint(), { decision: dec, notes: justification });
       onUpdate();
       window.location.reload();
     } catch (err) {
       setError(err?.response?.data?.error || err.message || 'Submission failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const confirmDestructiveAction = () => {
+    if (pendingDecision) {
+      performSubmit(pendingDecision.decision, pendingDecision.notes);
+      setShowConfirm(false);
+      setPendingDecision(null);
     }
   };
 
@@ -452,12 +501,19 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
             className="btn btn-primary"
             onClick={handleSubmit}
             disabled={loading || !decision}
-            style={{ flex: 1, padding: '18px', borderRadius: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+            style={{ 
+              flex: 1, 
+              padding: '18px', 
+              borderRadius: '15px', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              gap: '10px',
+              ...getSubmitButtonStyle()   // ← NEW: Dynamic colors
+            }}
           >
             {loading ? <Loader2 size={18} className="spinner" /> : <ShieldCheck size={18} />}
-            {isCO    ? 'COMMIT VALIDATION'  :
-             isSO    ? 'SUBMIT SO REVIEW'   :
-                       'SUBMIT TO CP_HRM OFFICE'}
+            {getSubmitButtonText()}
           </button>
 
           <div style={{
@@ -482,6 +538,42 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
           doc={previewDoc} 
           onClose={() => setPreviewDoc(null)} 
         />
+      )}
+
+      {/* ── NEW: Confirmation Modal for RETURNED & REJECTED ───────────────────── */}
+      {showConfirm && pendingDecision && (
+        <div className="modal-overlay" onClick={() => setShowConfirm(false)} style={{ 
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 11000, 
+          display: 'flex', alignItems: 'center', justifyContent: 'center' 
+        }}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ 
+            background: 'white', borderRadius: '20px', padding: '30px', maxWidth: '420px', textAlign: 'center' 
+          }}>
+            <AlertTriangle size={48} color="#991b1b" style={{ marginBottom: '20px' }} />
+            <h3 style={{ color: '#1c236d' }}>Confirm Action</h3>
+            <p style={{ margin: '20px 0', color: '#334155' }}>
+              Are you sure you want to <strong>{pendingDecision.decision === 'REJECTED' ? 'REJECT' : 'RETURN'}</strong> this case?<br/>
+              This action cannot be easily undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button 
+                onClick={() => { setShowConfirm(false); setPendingDecision(null); }}
+                className="btn btn-outline" 
+                style={{ flex: 1 }}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDestructiveAction}
+                className="btn btn-danger" 
+                style={{ flex: 1, background: '#991b1b' }}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : `Yes, ${pendingDecision.decision === 'REJECTED' ? 'Reject' : 'Return'}`}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <style dangerouslySetInnerHTML={{ __html: `

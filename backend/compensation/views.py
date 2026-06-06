@@ -151,7 +151,7 @@ def upload_document(request, case_id):
         s = DocumentUploadSerializer(data=request.data)
         if not s.is_valid():
             return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        
         doc_type    = s.validated_data['doc_type']
         file_base64 = s.validated_data['file']          # raw base64 payload (already validated)
         filename    = s.validated_data.get('filename') or 'document'
@@ -250,8 +250,6 @@ def resubmit_case(request, case_id):
 def list_cases(request):
     user = request.user
     role = str(user.role or '')
-    print(f"User {user.id} with role {role} is listing cases.")
-    print(role == 'COMPENSATION_HQ_CO')
     qs = CompensationCase.objects.all()
 
     if role in ('RPC', 'UNIT_COMMANDER'):

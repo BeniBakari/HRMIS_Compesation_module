@@ -24,14 +24,21 @@ const INCIDENT_TYPES = [
   'Other (on-duty)',
 ];
 
-const DOCUMENT_TYPES = [
-  { key: 'MEDICAL_REPORT', label: 'Medical Report', required: true },
-  { key: 'OB_EXTRACT', label: 'Police / OB Report', required: true },
-  { key: 'NATIONAL_ID', label: 'National ID / Force ID', required: true },
-  { key: 'DEATH_CERTIFICATE', label: 'Death Certificate', required: false },
-  { key: 'PF3', label: 'Commanding Officer Letter', required: false },
-];
+const REQUIRED_DOCS = {
+  'INJURY': ['OB_EXTRACT', 'PF3', 'MEDICAL_REPORT', 'NATIONAL_ID'],
+  'DEATH':  ['OB_EXTRACT', 'PF90', 'PF115', 'MEDICAL_REPORT', 'POSTMORTEM_REPORT', 'DEATH_CERTIFICATE'],
+};
 
+const DOCUMENT_METADATA = {
+  OB_EXTRACT: { label: 'Police / OB Report' },
+  PF3: { label: 'Commanding Officer Letter (PF3)' },
+  MEDICAL_REPORT: { label: 'Medical Report' },
+  NATIONAL_ID: { label: 'National ID / Force ID' },
+  PF90: { label: 'PF90 Claim Form' },
+  PF115: { label: 'PF115 Dependents Declaration' },
+  POSTMORTEM_REPORT: { label: 'Postmortem Report' },
+  DEATH_CERTIFICATE: { label: 'Death Certificate' },
+};
 
 const INITIAL_SOLDIER = { force_number: '', victim_name: '', rank: '', district: '' };
 const INITIAL_INCIDENT = { case_type: 'INJURY', incident_date: '', incident_time: '', incident_location: '', incident_type: '', description: '', injury_description: '' };
@@ -79,6 +86,14 @@ export default function CaseSubmission() {
       if (!incident.incident_type) e.incident_type = 'Required';
       if (!incident.description.trim()) e.description = 'Required';
     }
+    if (step === 2) {
+      const activeDocs = REQUIRED_DOCS[incident.case_type] || [];
+      activeDocs.forEach(key => {
+        if (!files[key]) {
+          e[key] = 'This supporting document is required';
+        }
+      });
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -107,6 +122,14 @@ export default function CaseSubmission() {
           raw: file
         }
       }));
+      // Clear specific file error on selection
+      if (errors[key]) {
+        setErrors(prev => {
+          const updated = { ...prev };
+          delete updated[key];
+          return updated;
+        });
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -140,14 +163,21 @@ export default function CaseSubmission() {
         nature_of_incident: nature,
         duty_context: incident.injury_description || '',
       };
+      
       const created = await casesApi.submit(payload);
+      
+      const activeDocs = REQUIRED_DOCS[incident.case_type] || [];
       for (const [type, f] of Object.entries(files)) {
-        await casesApi.uploadDocument(created.case_id, { doc_type: type, file: f.base64, filename: f.name });
+        if (activeDocs.includes(type)) {
+          await casesApi.uploadDocument(created.case_id, { doc_type: type, file: f.base64, filename: f.name });
+        }
       }
       navigate(`/cases/${created.case_id}`, { state: { submitted: true } });
     } catch (err) { setSubmitError(err.message || 'Submission failed'); }
     finally { setSubmitting(false); }
   };
+
+  const activeRequiredDocs = REQUIRED_DOCS[incident.case_type] || [];
 
   return (
     <div className="template-container">
@@ -179,6 +209,7 @@ export default function CaseSubmission() {
             <span style={{ opacity: 0.5 }}>4</span>
           </div>
         </div>
+
         {/* International Standard Segmented Ribbon Stepper */}
         <div style={{
           marginBottom: '35px',
@@ -306,7 +337,6 @@ export default function CaseSubmission() {
                   <label className="required">RANK</label>
                   <input className={`form-control ${errors.rank ? 'has-error' : ''}`} value={soldier.rank} onChange={e => setSoldier(s => ({ ...s, rank: e.target.value }))} />
                 </div>
-
               </div>
             </div>
           )}
@@ -356,67 +386,75 @@ export default function CaseSubmission() {
           {step === 2 && (
             <div key="step2" style={{ animation: 'fadeIn 0.4s' }}>
               <h3 className="section-title" style={{ marginBottom: '25px' }}>SUPPORTING EVIDENCE</h3>
-              <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>
-                Please upload clear scanned copies of all required documents (PDF or JPEG, max 10MB each).
+              <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '25px' }}>
+                Please upload clear scanned copies of all required documents for <strong style={{ color: '#1c236d' }}>{incident.case_type} Compensation</strong> (PDF or JPEG, max 10MB each).
               </p>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {DOCUMENT_TYPES.map(doc => {
-                  if (doc.key === 'DEATH_CERTIFICATE' && incident.case_type !== 'DEATH') return null;
-                  const file = files[doc.key];
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {activeRequiredDocs.map((docKey) => {
+                  const meta = DOCUMENT_METADATA[docKey] || { label: docKey };
+                  const fileData = files[docKey];
+                  const hasError = errors[docKey];
+
                   return (
-                    <div key={doc.key} style={{
-                      display: 'flex', alignItems: 'center', gap: '20px', padding: '15px 25px',
-                      background: '#f8fafc', borderRadius: '12px', border: `1px solid ${file ? '#c7d2fe' : '#e2e8f0'}`,
-                      position: 'relative', overflow: 'hidden', transition: 'border 0.3s'
+                    <div key={docKey} style={{
+                      background: 'white',
+                      padding: '16px 20px',
+                      borderRadius: '12px',
+                      border: hasError ? '1.5px solid #ef4444' : '1px solid #e2e8f0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.02)',
+                      transition: 'border-color 0.2s ease-in-out'
                     }}>
-                      {/* Icon */}
-                      <div style={{
-                        background: file ? '#1c236d' : '#e2e8f0', width: '40px', height: '40px',
-                        borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        color: file ? 'white' : '#94a3b8', flexShrink: 0
-                      }}>
-                        <FileText size={20} />
+                      <div style={{ flex: 1, paddingRight: '15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 600, color: '#1c236d', fontSize: '14px' }}>{meta.label}</span>
+                          <span style={{ fontSize: '10px', color: '#ef4444', fontWeight: 700, padding: '2px 6px', background: '#fef2f2', borderRadius: '4px', textTransform: 'uppercase' }}>* Required</span>
+                        </div>
+                        {fileData ? (
+                          <span style={{ color: '#22c55e', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px', fontWeight: 500 }}>
+                            <Check size={14} strokeWidth={3} /> {fileData.name} ({Math.round(fileData.size / 1024 / 1024 * 100) / 100} MB)
+                          </span>
+                        ) : (
+                          <span style={{ color: '#94a3b8', fontSize: '12px', marginTop: '6px', display: 'block' }}>No document uploaded</span>
+                        )}
+                        {hasError && <small style={{ color: '#ef4444', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '6px', fontWeight: 500 }}><AlertCircle size={12} /> {hasError}</small>}
                       </div>
 
-                      {/* Info */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#1c236d' }}>
-                          {doc.label} {doc.required && <span style={{ color: '#ef4444' }}>*</span>}
-                        </div>
-                        <div style={{ fontSize: '12px', color: file ? '#4f46e5' : '#94a3b8', fontWeight: file ? 'bold' : 'normal', marginTop: '2px' }}>
-                          {file ? `✓ ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)` : 'No attachment provided'}
-                        </div>
-                      </div>
-
-                      {/* Buttons */}
-                      <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
-                        {/* Preview button - inaonekana tu kama file imewekwa */}
-                        {file && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        {fileData && (
                           <button
-                            onClick={() => handleOpenPreview(file)}
-                            style={{
-                              padding: '8px 16px', borderRadius: '8px', border: '1px solid #c7d2fe',
-                              background: '#eef2ff', color: '#4f46e5', fontWeight: 500,
-                              fontSize: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
-                            }}
+                            type="button"
+                            className="btn btn-outline"
+                            style={{ padding: '8px 16px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px', background: 'transparent', border: '1px solid #cbd5e1', cursor: 'pointer', borderRadius: '8px' }}
+                            onClick={() => handleOpenPreview(fileData)}
                           >
-                            <FileText size={13} /> PREVIEW
+                            <FileText size={14} /> Preview
                           </button>
                         )}
-
-                        {/* Select/Change file */}
                         <label style={{
-                          padding: '8px 16px', borderRadius: '8px', cursor: 'pointer',
-                          background: file ? '#f0fdf4' : '#1c236d', color: file ? '#166534' : 'white',
-                          border: file ? '1px solid #bbf7d0' : 'none',
-                          fontWeight: 500, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px'
+                          background: '#1c236d',
+                          color: 'white',
+                          padding: '8px 18px',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          transition: 'background 0.2s',
+                          border: 'none'
                         }}>
-                          <Upload size={13} /> {file ? 'CHANGE' : 'SELECT FILE'}
+                          <Upload size={14} />
+                          {fileData ? 'Replace' : 'Upload File'}
                           <input
-                            type="file" style={{ display: 'none' }}
-                            onChange={e => handleFileSelect(doc.key, e.target.files[0])}
-                            accept=".pdf,.jpg,.jpeg,.png"
+                            type="file"
+                            accept=".pdf,image/jpeg,image/jpg,image/png"
+                            style={{ display: 'none' }}
+                            onChange={e => handleFileSelect(docKey, e.target.files[0])}
                           />
                         </label>
                       </div>
@@ -459,7 +497,7 @@ export default function CaseSubmission() {
                       </button>
                     </div>
 
-                    {/* Modal Body - PDF au Image */}
+                    {/* Modal Body - PDF or Image */}
                     <div style={{ flex: 1, overflow: 'auto', background: '#f8fafc', minHeight: '500px' }}>
                       {(previewDoc.type === 'application/pdf' || previewDoc.name.toLowerCase().endsWith('.pdf')) ? (
                         <iframe
@@ -507,7 +545,6 @@ export default function CaseSubmission() {
                     <div style={{ marginTop: '10px' }}>
                       <div style={{ fontWeight: 500, color: '#1c236d', fontSize: '18px' }}>{soldier.victim_name}</div>
                       <div style={{ fontSize: '14px', marginTop: '5px', opacity: 0.8 }}>{soldier.rank} - {soldier.force_number}</div>
-
                     </div>
                   </div>
                   <div className="info-section-premium" style={{ background: '#f8fafc', padding: '20px', borderRadius: '16px', boxShadow: 'inset 3px 3px 6px rgba(0,0,0,0.02)' }}>
@@ -526,9 +563,9 @@ export default function CaseSubmission() {
                       <p style={{ fontSize: '13px', marginTop: '8px', lineHeight: 1.6, fontStyle: 'italic' }}>"{incident.description}"</p>
                     </div>
                     <div style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #e2e8f0', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                      {Object.keys(files).map(k => (
-                        <span key={k} style={{ padding: '4px 10px', background: '#dcfce7', color: '#166534', borderRadius: '8px', fontSize: '10px', fontWeight: 500 }}>
-                          <Check size={10} /> {k.replace(/_/g, ' ')}
+                      {Object.keys(files).filter(k => activeRequiredDocs.includes(k)).map(k => (
+                        <span key={k} style={{ padding: '4px 10px', background: '#dcfce7', color: '#166534', borderRadius: '8px', fontSize: '10px', fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                          <Check size={10} /> {(DOCUMENT_METADATA[k]?.label || k).replace(/_/g, ' ')}
                         </span>
                       ))}
                     </div>

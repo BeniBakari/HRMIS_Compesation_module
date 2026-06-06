@@ -25,30 +25,34 @@ import {
 } from "lucide-react";
 
 const ROLES = [
-  "ADMIN",
-  "RPC",
-  "COMPENSATION_HQ",
-  "COMPENSATION_CO",
-  "COMPENSATION_HQ_CHIEF",
-  "CP_HRM",
-  "COMMITTEE_MEMBER",
+  { value: "ADMIN", label: "Administrator" },
+  { value: "RPC", label: "RPC / Unit Commander" },
+  { value: "COMPENSATION_HQ", label: "Compensation HQ" },
+  { value: "COMPENSATION__HQ_CO", label: "Compensation HQ - CO" },
+  { value: "COMPENSATION__HQ_SO", label: "Compensation HQ - SO" },
+  { value: "COMPENSATION_HQ_CHIEF", label: "Compensation HQ - Chief" },
+  { value: "CP_ADMINISTRATION", label: "CP_ADMINISTRATION" },
+  { value: "COMMITTEE_MEMBER", label: "Committee Member" },
 ];
 
 const RANKS = [
-  // "CP_ADMINISTRATION",
-  // "DCP_ADMINISTRATION",
-  // "ACP_ADMINISTRATION",
-  "CP",
-  "DCP",
-  "SACP",
-  "ACP",
-  "SP",
-  "ASP",
-  "INSP",
-  "AINSP",
-  "SGT",
-  "CPL",
-  "PC",
+  { value: "CP_ADMINISTRATION", label: "Inspector General of Police" },
+  { value: "DCP_ADMINISTRATION", label: "Deputy CP_ADMINISTRATION" },
+  { value: "CASP", label: "Commissioner of Police" },
+  { value: "SACP", label: "Senior Assistant Commissioner" },
+  { value: "ACP", label: "Assistant Commissioner" },
+  { value: "SSP", label: "Senior Superintendent" },
+  { value: "SP", label: "Superintendent" },
+  { value: "ASP", label: "Assistant Superintendent" },
+  { value: "INSP", label: "Inspector" },
+  { value: "A/INSP", label: "Acting Inspector" },
+  { value: "RSM", label: "Regimental Sergeant Major" },
+  { value: "S/SGT", label: "Staff Sergeant" },
+  { value: "SGT", label: "Sergeant" },
+  { value: "CPL", label: "Corporal" },
+  { value: "PC", label: "Police Constable" },
+  { value: "CIVILIAN", label: "Civilian" },
+  { value: "DR", label: "Doctor" },
 ];
 
 const DEFAULT_PASSWORD = "!@#$1234";
@@ -71,10 +75,21 @@ const EMPTY_FORM = {
   confirm_password: DEFAULT_PASSWORD,
 };
 
+const getRoleLabel = (roleValue) => {
+  const role = ROLES.find(r => r.value === roleValue);
+  return role ? role.label : roleValue || "None";
+};
+
+const getRankLabel = (rankValue) => {
+  const rank = RANKS.find(r => r.value === rankValue);
+  return rank ? rank.label : rankValue || "None";
+};
+
 function normaliseHRMIS(raw) {
   const d = raw?.info || raw;
-  const rawRank = (d.rank || "PC").toString().trim().toUpperCase();
-  const validRank = RANKS.find((r) => r === rawRank) || "PC";
+  const rawRank = (d.rank || "PC").toString().trim();
+  const validRank = RANKS.find((r) => r.value === rawRank)?.value || "PC";
+  
   return {
     first_name: d.fname || "",
     last_name: d.lname || "",
@@ -82,7 +97,7 @@ function normaliseHRMIS(raw) {
     nin: d.nin || "",
     rank: validRank,
     unit: d.department || "",
-    station: d.commands || "",
+    station: d.stations || d.station || "",
     phone: d.phoneno || "",
     force_number: d.force_number || "",
     email: d.email || "",
@@ -301,7 +316,7 @@ export default function UserManagement() {
       const response = await authApi.updateUserRole(selectedUser.id, { role: selectedRole });
       await SuccessAlert({
         title: "Role Updated!",
-        text: response?.message || `Role changed to ${selectedRole.replace(/_/g, " ")}.`,
+        text: response?.message || `Role changed to ${getRoleLabel(selectedRole)}.`,
         confirmButtonText: "OK",
         timer: 3000,
       });
@@ -436,7 +451,8 @@ export default function UserManagement() {
                 <label>SYSTEM ROLE</label>
                 <div className="select-wrapper">
                   <select className="form-control" value={form.role} onChange={(e) => setField("role", e.target.value)}>
-                    {ROLES.map((r) => <option key={r} value={r}>{r.replace(/_/g, " ")}</option>)}
+                    <option value="">-- Select Role --</option>
+                    {ROLES.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
                   <ChevronDown size={14} className="select-arrow" />
                 </div>
@@ -445,7 +461,8 @@ export default function UserManagement() {
                 <label>RANK</label>
                 <div className="select-wrapper">
                   <select className="form-control" value={form.rank} onChange={(e) => setField("rank", e.target.value)}>
-                    {RANKS.map((r) => <option key={r} value={r}>{r}</option>)}
+                    <option value="">-- Select Rank --</option>
+                    {RANKS.map((r) => <option key={r.value} value={r.value}>{r.label}</option>)}
                   </select>
                   <ChevronDown size={14} className="select-arrow" />
                 </div>
@@ -512,7 +529,7 @@ export default function UserManagement() {
 
             <div style={{ marginBottom: "24px" }}>
               <p style={{ margin: "0 0 8px 0", fontSize: "13px", color: "#666" }}>
-                Current role: <strong>{selectedUser.role?.replace(/_/g, " ") || "None"}</strong>
+                Current role: <strong>{getRoleLabel(selectedUser.role)}</strong>
               </p>
               <label style={{ display: "block", marginBottom: "8px", fontSize: "13px", fontWeight: 500, color: "#333" }}>
                 Select new role:
@@ -524,9 +541,10 @@ export default function UserManagement() {
                   onChange={(e) => setSelectedRole(e.target.value)}
                   style={{ paddingRight: "32px" }}
                 >
+                  <option value="">-- Select Role --</option>
                   {ROLES.map((r) => (
-                    <option key={r} value={r}>
-                      {r.replace(/_/g, " ")}
+                    <option key={r.value} value={r.value}>
+                      {r.label}
                     </option>
                   ))}
                 </select>
@@ -640,8 +658,8 @@ export default function UserManagement() {
                       <td style={{ fontWeight: 500 }}>{u.force_number || "—"}</td>
                       <td>
                         <div className="staff-info">
-                          <strong>{u.rank}</strong>
-                          <small>{u.role?.replace(/_/g, " ")}</small>
+                          <strong>{getRankLabel(u.rank)}</strong>
+                          <small>{getRoleLabel(u.role)}</small>
                         </div>
                       </td>
                       <td>
@@ -657,6 +675,18 @@ export default function UserManagement() {
                       </td>
                       <td>
                         <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
+                          {/* Change Role */}
+                          <FaPencilAlt
+                            size={13}
+                            title="Change user role"
+                            onClick={() => openRoleModal(u)}
+                            style={{
+                              cursor: "pointer",
+                              color: "#1c236d",
+                              opacity: 0.6,
+                              flexShrink: 0,
+                            }}
+                          />
                           {/* Sync */}
                           <RefreshCw
                             size={15}
@@ -696,18 +726,6 @@ export default function UserManagement() {
                             title="View Profile"
                             style={{ cursor: "pointer", color: "#1c236d", opacity: 0.6 }}
                             onClick={() => navigate(`/users/${u.id}`)}
-                          />
-                          {/* Change Role */}
-                          <FaPencilAlt
-                            size={15}
-                            title="Change user role"
-                            onClick={() => openRoleModal(u)}
-                            style={{
-                              cursor: "pointer",
-                              color: "#1c236d",
-                              opacity: 0.6,
-                              flexShrink: 0,
-                            }}
                           />
                         </div>
                       </td>

@@ -10,6 +10,7 @@ import { useAuth } from "../../context/AuthContext";
 import { usePermissions } from "../../hooks/usePermissions";
 import { notifApi, authApi } from "../../services/api";
 import Footer from "./Footer";
+import ChangePasswordModal1 from "../../pages/ChangePasswordModal";
 import {
   Menu,
   X,

@@ -41,6 +41,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
     'accounts.middleware.default_password.DefaultPasswordMiddleware',
 ]
 
@@ -153,3 +154,18 @@ X_FRAME_OPTIONS = 'ALLOWALL'
 # Leave blank to use manual soldier detail entry.
 HR_CORE_API_URL = config('HR_CORE_API_URL', default='http://192.168.10.12')
 HR_CORE_API_TOKEN = config('HR_CORE_API_TOKEN', default='')
+
+
+
+
+
+# At the bottom:
+DEFAULT_PASSWORD_CHANGE_URL = "/api/auth/users/change-password/"
+
+DEFAULT_PASSWORD_EXEMPT_URLS = [
+    "/api/auth/users/change-password/",
+    "/api/auth/login/",
+    "/api/auth/logout/",
+    "/api/token/",
+    "/api/token/refresh/",
+]
