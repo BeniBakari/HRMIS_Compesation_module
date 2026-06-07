@@ -404,7 +404,7 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
             <FileText size={18} /> SUPPORTING DOCUMENTS
           </h3>
           <p style={{ color: '#64748b', fontSize: '13px', marginBottom: '20px' }}>
-            Documents verified by CO. Review carefully before making your decision.
+            Documents verified by HQ. Review carefully before making your decision.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -435,7 +435,7 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
                       <div style={{ fontSize: '11px', opacity: 0.6 }}>
                         {doc.original_filename} ·{' '}
                         <span style={{ color: doc.is_verified ? '#166534' : '#991b1b', fontWeight: 500 }}>
-                          {doc.is_verified ? 'Verified by CO' : 'Not verified'}
+                          {doc.is_verified ? 'Verified by HQ' : 'Not verified'}
                         </span>
                       </div>
                     </div>

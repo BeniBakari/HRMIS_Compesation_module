@@ -1113,6 +1113,7 @@ export default function CaseDetail() {
     c.submitted_members ||
     c.committee_members?.filter((m) => m.has_submitted_input) ||
     [];
+  const rpcMember = reportMembers.find((m) => m.role === "RPC");
   const reportTotalMembers = reportMembers.length;
   const reportAvgSeverity =
     reportTotalMembers > 0
@@ -1183,6 +1184,11 @@ export default function CaseDetail() {
               marginBottom: "30px",
             }}
           >
+            <img
+              src="/police_logo.png"
+              alt="TPF Logo"
+              style={{ width: "60px", marginBottom: "10px" }}
+            />
             <h1 style={{ margin: 0, fontSize: "24px", fontWeight: 500 }}>
               TANZANIA POLICE FORCE
             </h1>
@@ -1466,44 +1472,39 @@ export default function CaseDetail() {
               justifyContent: "space-between",
             }}
           >
-            <div style={{ textAlign: "center", width: "220px" }}>
-              <div
-                style={{
-                  borderBottom: "1px solid #000",
-                  marginBottom: "10px",
-                  height: "35px",
-                }}
-              ></div>
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 500,
-                  color: "#1c236d",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                PREPARED BY ( CHAIRMAN )
-              </div>
-            </div>
-            <div style={{ textAlign: "center", width: "220px" }}>
-              <div
-                style={{
-                  borderBottom: "1px solid #000",
-                  marginBottom: "10px",
-                  height: "35px",
-                }}
-              ></div>
-              <div
-                style={{
-                  fontSize: "10px",
-                  fontWeight: 500,
-                  color: "#1c236d",
-                  letterSpacing: "0.5px",
-                }}
-              >
-                AUTHORIZED BY ( RPC )
-              </div>
-            </div>
+            <div style={{ textAlign: "center", width: "220px", margin: "0 auto" }}>
+  {/* Signature */}
+  <div style={{ marginBottom: "10px" }}>
+    <img
+      src={`data:image/png;base64,${rpcMember?.signature}`}
+      alt="Chairman Signature"
+      style={{ width: "60px", marginBottom: "10px" }}
+    />
+  </div>
+
+  {/* Line */}
+  <div
+    style={{
+      borderBottom: "1px solid #000",
+      marginBottom: "10px",
+      marginTop: "-50px",
+      height: "35px",
+    }}
+  ></div>
+
+  {/* Label */}
+  <div
+    style={{
+      fontSize: "10px",
+      fontWeight: 500,
+      color: "#1c236d",
+      letterSpacing: "0.5px",
+    }}
+  >
+    PREPARED BY ( CHAIRMAN )
+  </div>
+</div>
+
           </div>
         </div>
       </div>

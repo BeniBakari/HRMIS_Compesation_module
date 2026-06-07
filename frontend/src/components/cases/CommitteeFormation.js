@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { casesApi, authApi } from "../../services/api";
 import {
   Users,
@@ -394,6 +395,8 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [signature, setSignature] = useState("");
+  const { user } = useAuth();
+  const [showSignature, setShowSignature] = useState(false);
 
   const updateMember = (idx, fields) => {
     setMembers((ms) => ms.map((m, i) => (i === idx ? { ...m, ...fields } : m)));
@@ -515,6 +518,7 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
     if (typeof d === "string") return d;
     return JSON.stringify(d, null, 2);
   };
+
   const handleSubmit = async () => {
     const validMembers = members.filter(
       (m) => m.force_number && m.role && m.validated,
@@ -532,7 +536,6 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
         "Each committee role must be assigned to a different person.",
       );
     }
-
     if (!meetingDate || !signature.trim()) {
       return setError(
         "Please specify a meeting date and provide your authorization signature.",
@@ -585,7 +588,6 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
           // --------------------------
           const nameParts = full_name.split(/\s+/);
           const first_name = nameParts[0] || force_number;
-          const middle_name = nameParts[1] || "";
           const last_name = nameParts.slice(2).join(" ") || nameParts[1] || "-";
 
           // const email =
@@ -771,7 +773,13 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
                   padding: "20px 25px",
                   background: "white",
                   borderRadius: "18px",
-                  border: `1px solid ${member.validationError ? "#fecaca" : member.validated ? "#bbf7d0" : "#e2e8f0"}`,
+                  border: `1px solid ${
+                    member.validationError
+                      ? "#fecaca"
+                      : member.validated
+                        ? "#bbf7d0"
+                        : "#e2e8f0"
+                  }`,
                   boxShadow: "0 4px 10px rgba(0,0,0,0.02)",
                   transition: "all 0.3s",
                 }}
@@ -1025,29 +1033,87 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
               gap: "8px",
               color: "#1c236d",
               fontWeight: 500,
+              marginBottom: "15px",
             }}
           >
-            <ShieldCheck size={16} /> AUTHORIZED SIGNATURE
+            <ShieldCheck size={16} /> AUTHORIZE WITH YOUR SIGNATURE
           </label>
-          <p
-            style={{ fontSize: "11px", color: "#64748b", marginBottom: "15px" }}
-          >
-            Andika jina lako kamili au sahihi yako ya mamlaka kuidhinisha
-            uundaji na utumaji wa kamati hii.
-          </p>
-          <input
-            className="form-control"
-            type="text"
+
+          <div
             style={{
-              maxWidth: "400px",
-              fontFamily: "Georgia, serif",
-              fontSize: "15px",
-              letterSpacing: "0.5px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "15px",
+              background: "white",
+              borderRadius: "12px",
+              border: "1px solid #e2e8f0",
             }}
-            placeholder="Andika sahihi yako hapa..."
-            value={signature}
-            onChange={(e) => setSignature(e.target.value)}
-          />
+          >
+            {user.signature && (
+              <img
+                src={`data:image/png;base64,${user.signature}`}
+                alt="Your Signature"
+                style={{
+                  width: "120px",
+                  height: "60px",
+                  objectFit: "cover",
+                  borderRadius: "8px",
+                  border: "1px solid #cbd5e1",
+                }}
+              />
+            )}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <input
+                type="checkbox"
+                id="signature-checkbox"
+                checked={showSignature}
+                onChange={(e) => {
+                  setShowSignature(e.target.checked);
+                  if (e.target.checked) {
+                    setSignature(user.signature || "");
+                  } else {
+                    setSignature("");
+                  }
+                }}
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  cursor: "pointer",
+                }}
+              />
+              <label
+                htmlFor="signature-checkbox"
+                style={{
+                  fontSize: "13px",
+                  color: "#1c236d",
+                  cursor: "pointer",
+                  fontWeight: 500,
+                }}
+              >
+                I authorize this committee formation with my digital signature
+              </label>
+            </div>
+          </div>
+
+          {showSignature && signature && (
+            <div
+              style={{
+                marginTop: "12px",
+                padding: "10px 15px",
+                background: "#f0fdf4",
+                borderRadius: "8px",
+                border: "1px solid #bbf7d0",
+                fontSize: "12px",
+                color: "#166534",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+              }}
+            >
+              <Check size={14} /> Signature authorized
+            </div>
+          )}
         </div>
 
         <div
