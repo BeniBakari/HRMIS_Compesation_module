@@ -323,3 +323,68 @@ def update_role(request, user_id):
         },
         status=status.HTTP_200_OK
     )
+<<<<<<< HEAD
+=======
+
+
+
+from django.contrib import messages
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import update_session_auth_hash
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from .models import User
+
+# Import your custom User model and the middleware
+from .models import User  # Make sure this matches your AUTH_USER_MODEL
+from accounts.middleware.default_password import DefaultPasswordMiddleware
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def change_password(request, user_id=None):
+    """
+    Change password for current user or another user (if admin)
+    """
+    # Determine which user to update
+    if user_id is None or user_id == request.user.id:
+        user = request.user
+    else:
+        # Only allow admins or users with proper permission to change others' passwords
+        if not request.user.is_staff and not request.user.is_superuser:
+            return Response({"detail": "You do not have permission to change other users' passwords."}, status=403)
+        user = get_object_or_404(User, id=user_id)
+
+    # Get data from request
+    current_password = request.data.get('current_password')
+    new_password = request.data.get('new_password')
+
+    if not current_password or not new_password:
+        return Response({"detail": "Current password and new password are required."}, status=400)
+
+    # Verify current password
+    if not user.check_password(current_password):
+        return Response({"detail": "Current password is incorrect."}, status=400)
+
+    # Validate new password strength (optional but recommended)
+    if len(new_password) < 8:
+        return Response({"detail": "New password must be at least 8 characters long."}, status=400)
+
+    # Change password
+    user.set_password(new_password)
+    user.save()
+
+    # IMPORTANT: Clear the default password flag
+    DefaultPasswordMiddleware.clear_flag(request)
+
+    # Keep the user logged in
+    update_session_auth_hash(request, user)
+
+    # Success response for React
+    return Response({
+        "status": "success",
+        "message": "Nenosiri limebadilishwa kwa mafanikio!",
+        "detail": "Password changed successfully."
+    })
+>>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c

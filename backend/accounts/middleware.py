@@ -4,10 +4,6 @@ from django.contrib import messages
 from django.contrib.auth.hashers import check_password
 from django.shortcuts import redirect
 from django.urls import reverse, NoReverseMatch
-<<<<<<< HEAD
-=======
-from django.http import JsonResponse
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
 
 logger = logging.getLogger(__name__)
 
@@ -29,56 +25,35 @@ class DefaultPasswordMiddleware:
 
     def __init__(self, get_response):
         self.get_response = get_response
-<<<<<<< HEAD
-=======
-        print("✅ DefaultPasswordMiddleware: Successfully initialized!")
-        logger.info("DefaultPasswordMiddleware initialized successfully")
-        
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
         self._change_url = self._resolve_change_url()
         self._exempt_urls = self._build_exempt_urls()
         self._default_passwords = self._build_password_list()
 
-<<<<<<< HEAD
     # ------------------------------------------------------------------ #
     # Helpers                                                              #
     # ------------------------------------------------------------------ #
 
-=======
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
     def _resolve_change_url(self) -> str:
         configured = getattr(settings, "DEFAULT_PASSWORD_CHANGE_URL", None)
         if configured:
             return configured
-<<<<<<< HEAD
         for name in ("password_change", "account_change_password"):
             try:
                 return reverse(name)
             except NoReverseMatch:
                 pass
         return "/accounts/password_change/"
-=======
-        return "/api/auth/users/change-password/"   # Default for your React + DRF setup
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
 
     def _build_exempt_urls(self) -> list:
         defaults = [
             self._change_url,
-<<<<<<< HEAD
             "/accounts/logout/",
             "/accounts/login/",
             "/admin/logout/",
-=======
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
             "/api/auth/login/",
             "/api/auth/logout/",
             "/api/token/",
             "/api/token/refresh/",
-<<<<<<< HEAD
-=======
-            "/admin/logout/",
-            "/accounts/logout/",
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
         ]
         extra = getattr(settings, "DEFAULT_PASSWORD_EXEMPT_URLS", [])
         return list(set(defaults + list(extra)))
@@ -90,7 +65,6 @@ class DefaultPasswordMiddleware:
     def _is_exempt(self, request) -> bool:
         return any(request.path.startswith(url) for url in self._exempt_urls)
 
-<<<<<<< HEAD
     # ------------------------------------------------------------------ #
     # Main entry point — only ONE __call__                                 #
     # ------------------------------------------------------------------ #
@@ -117,40 +91,11 @@ class DefaultPasswordMiddleware:
                 messages.warning(
                     request,
                     "Nenosiri lako ni dhaifu au la kawaida. Tafadhali libadilishe ili uendelee.",
-=======
-    def __call__(self, request):
-        user = getattr(request, "user", None)
-
-        # Only check authenticated users
-        if user and user.is_authenticated and not self._is_exempt(request):
-            flag = request.session.get(self.SESSION_KEY)
-
-            if flag is None:
-                has_default = self._has_default_password(request)
-                request.session[self.SESSION_KEY] = has_default
-                request.session.modified = True
-                flag = has_default
-
-            if flag is True:
-                # API Response (for React Frontend)
-                if request.headers.get('Accept') == 'application/json' or 'api' in request.path.lower():
-                    return JsonResponse({
-                        "detail": "Nenosiri lako ni dhaifu au la kawaida. Tafadhali libadilishe ili uendelee.",
-                        "requires_password_change": True,
-                        "change_url": self._change_url
-                    }, status=403)
-
-                # Normal Django redirect (if needed)
-                messages.warning(
-                    request,
-                    "Nenosiri lako ni dhaifu au la kawaida. Tafadhali libadilishe ili uendelee."
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
                 )
                 return redirect(self._change_url)
 
         return self.get_response(request)
 
-<<<<<<< HEAD
     # ------------------------------------------------------------------ #
     # Password check                                                       #
     # ------------------------------------------------------------------ #
@@ -158,11 +103,6 @@ class DefaultPasswordMiddleware:
     def _has_default_password(self, request) -> bool:
         user = request.user
         hashed = user.password
-=======
-    def _has_default_password(self, request) -> bool:
-        user = request.user
-        hashed = getattr(user, 'password', None)
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
         if not hashed:
             return False
 
@@ -180,14 +120,9 @@ class DefaultPasswordMiddleware:
             try:
                 if check_password(candidate, hashed):
                     logger.warning(
-<<<<<<< HEAD
                         "Mtumiaji '%s' (id=%s) anatumia nenosiri dhaifu.",
                         username,
                         user.pk,
-=======
-                        "Weak/default password detected for user '%s' (id=%s)",
-                        username or "unknown", user.pk
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
                     )
                     return True
             except Exception:
@@ -195,7 +130,6 @@ class DefaultPasswordMiddleware:
 
         return False
 
-<<<<<<< HEAD
     # ------------------------------------------------------------------ #
     # Call this after successful password change to lift the lock         #
     # ------------------------------------------------------------------ #
@@ -204,11 +138,3 @@ class DefaultPasswordMiddleware:
     def clear_flag(request) -> None:
         request.session.pop(DefaultPasswordMiddleware.SESSION_KEY, None)
         request.session.modified = True
-=======
-    @staticmethod
-    def clear_flag(request) -> None:
-        """Call this after successful password change"""
-        if hasattr(request, 'session'):
-            request.session.pop(DefaultPasswordMiddleware.SESSION_KEY, None)
-            request.session.modified = True
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c

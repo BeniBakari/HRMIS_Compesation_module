@@ -99,13 +99,21 @@ class CommitteeMemberSerializer(serializers.ModelSerializer):
     force_number        = serializers.SerializerMethodField()
     rank                = serializers.SerializerMethodField()
     region              = serializers.SerializerMethodField()
+<<<<<<< HEAD
+=======
+    signature              = serializers.SerializerMethodField()
+>>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
 
     class Meta:
         model  = CommitteeMember
         fields = [
             'id', 'user_id', 'user_display', 'role', 'assigned_at',
             'appointment_letter_path', 'has_submitted_input',
+<<<<<<< HEAD
             'force_number', 'rank', 'region',
+=======
+            'force_number', 'rank', 'region', 'signature'
+>>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
         ]
         read_only_fields = ['id', 'assigned_at']
 
@@ -124,6 +132,13 @@ class CommitteeMemberSerializer(serializers.ModelSerializer):
     def get_rank(self, obj):
         return obj.user.rank if obj.user else None
 
+<<<<<<< HEAD
+=======
+    def get_signature(self, obj):
+        if not obj.user:
+            return None
+        return obj.user.signature  # This will return a data URI or empty string
+>>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
     def get_region(self, obj):
         if not obj.user:
             return None
@@ -144,7 +159,11 @@ class CommitteeMemberInputSerializer(serializers.Serializer):
 class CommitteeFormationSerializer(serializers.Serializer):
     meeting_date      = serializers.DateField()
     digital_signature = serializers.CharField(
+<<<<<<< HEAD
         max_length=500, required=False, allow_blank=True, default=''
+=======
+         required=False, allow_blank=True, default=''
+>>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
     )
     members = CommitteeMemberInputSerializer(many=True, min_length=4, max_length=4)
 
@@ -319,6 +338,10 @@ class CaseDetailSerializer(serializers.ModelSerializer):
                 "role":              m.role,
                 "full_name":         m.user.get_full_name() if m.user else None,
                 "force_number":      m.user.force_number if m.user else None,
+<<<<<<< HEAD
+=======
+                "signature":         m.user.signature if m.user else None,
+>>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
                 "submitted_at":      m.assessment_input.submitted_at if m.assessment_input else None,
                 "notes":             m.assessment_input.assessment_notes if m.assessment_input else None,
                 "severity":          m.assessment_input.severity_class if m.assessment_input else None,

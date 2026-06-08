@@ -7,6 +7,10 @@ import {
   ChevronRight, Loader2, TrendingUp, MessageSquare,
   DollarSign
 } from 'lucide-react';
+<<<<<<< HEAD
+=======
+import "../../pages/CaseDetail.css";
+>>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
 
 const SEVERITY_OPTIONS = [
   { value: 'MINOR',    label: 'Minor',    pct: 25,  color: '#22c55e', bg: '#f0fdf4' },
