@@ -1,0 +1,11 @@
+# Ignore all node_modules folders
+node_modules/
+
+# If you want to be explicit for frontend too
+frontend/node_modules/
+__pycache__/
+*.pyc
+*.pyo
+
+hrenv/
+.env

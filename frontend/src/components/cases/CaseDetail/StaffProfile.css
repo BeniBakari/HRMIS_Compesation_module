@@ -1,0 +1,253 @@
+/* ============================================
+   StaffProfile.css — neumorphic base design system
+   Used by CaseDetail and any other staff profile pages.
+   ============================================ */
+
+:root {
+  --neu-bg:                 #e0e5ec;
+  --neu-shadow-dark:        rgba(163, 177, 198, 0.6);
+  --neu-shadow-light:       rgba(255, 255, 255, 0.7);
+  --neu-shadow-inset-dark:  rgba(163, 177, 198, 0.5);
+  --neu-shadow-inset-light: rgba(255, 255, 255, 0.5);
+  --neu-primary:   #1c236d;
+  --neu-secondary: #242c7a;
+  --neu-success:   #10b981;
+  --neu-danger:    #ef4444;
+  --neu-warning:   #f59e0b;
+  --neu-info:      #3b82f6;
+  --white: #ffffff;
+}
+
+body {
+  background-color: var(--neu-bg) !important;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ── Modal z-index fixes ─────────────────────── */
+[class*="modal-overlay"],
+[class*="-modal-overlay"],
+.modal-overlay { z-index: 9999 !important; }
+
+[class*="pdf-preview"],
+[class*="preview-overlay"] { z-index: 10000 !important; }
+
+/* ── Layout containers ───────────────────────── */
+.staff-profile-template-container {
+  padding: 20px !important;
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  background: var(--neu-bg);
+  min-height: 100vh;
+}
+
+.staff-profile {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--neu-bg);
+}
+
+/* ── Profile header ──────────────────────────── */
+.profile-header {
+  background: var(--neu-bg);
+  border-radius: 25px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow:
+    20px 20px 40px var(--neu-shadow-dark),
+    -20px -20px 40px var(--neu-shadow-light);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.profile-header-content {
+  display: flex;
+  align-items: stretch;
+  gap: 40px;
+  padding: 0;
+  background: transparent;
+  color: var(--neu-secondary);
+}
+
+/* ── Photo section ───────────────────────────── */
+.profile-photo-large {
+  width: 280px;
+  height: 380px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--neu-bg);
+  box-shadow:
+    inset 8px 8px 16px var(--neu-shadow-inset-dark),
+    inset -8px -8px 16px var(--neu-shadow-inset-light);
+  padding: 15px;
+  transition: all 0.3s ease;
+}
+
+.profile-photo-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: bottom center;
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 5px;
+}
+
+.photo-placeholder-large {
+  width: 100%;
+  height: 100%;
+  background: var(--neu-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  border-radius: 15px;
+  color: var(--neu-primary);
+}
+
+/* ── Info section ────────────────────────────── */
+.info-section {
+  margin-bottom: 40px;
+  background: var(--neu-bg);
+  padding: 30px;
+  border-radius: 25px;
+  box-shadow:
+    15px 15px 30px var(--neu-shadow-dark),
+    -15px -15px 30px var(--neu-shadow-light),
+    inset 2px 2px 4px var(--neu-shadow-inset-light),
+    inset -2px -2px 4px var(--neu-shadow-inset-dark);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-section:last-child { margin-bottom: 0; }
+
+.info-section h3 {
+  color: var(--neu-primary);
+  font-size: 24px;
+  font-weight: normal;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  position: relative;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.info-section h3:before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 80px;
+  height: 6px;
+  background: var(--neu-primary);
+  border-radius: 3px;
+}
+
+/* ── Badges ──────────────────────────────────── */
+.badge {
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-size: 14px;
+  font-weight: normal;
+  text-transform: uppercase;
+  display: inline-block;
+  letter-spacing: 1px;
+  box-shadow: 4px 4px 8px var(--neu-shadow-dark), -4px -4px 8px var(--neu-shadow-light);
+  border: none;
+}
+
+.badge-secondary, .badge-primary { background: #1c236d !important; color: #ffffff !important; }
+.badge-info     { background: #0284c7 !important; color: #ffffff !important; }
+.badge-success  { background: var(--neu-success) !important; color: #ffffff !important; }
+.badge-warning  { background: var(--neu-warning) !important; color: #ffffff !important; }
+.badge-danger   { background: var(--neu-danger) !important;  color: #ffffff !important; }
+.badge-dark     { background: #1e293b !important; color: #ffffff !important; }
+
+/* ── Buttons ─────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px 36px;
+  border: none;
+  border-radius: 20px;
+  font-size: 16px;
+  font-weight: normal;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  min-width: 140px;
+  gap: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  box-shadow: 8px 8px 16px var(--neu-shadow-dark), -8px -8px 16px var(--neu-shadow-light);
+}
+
+.btn-primary { background: var(--neu-primary); color: #ffffff; }
+.btn-primary:hover { background: #151a50; transform: translateY(-5px); }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-secondary { background: var(--neu-bg); color: var(--neu-secondary); }
+.btn-secondary:hover { color: var(--neu-primary); transform: translateY(-5px); }
+
+/* ── Loading & error states ──────────────────── */
+.loading-state,
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: var(--neu-bg);
+  border-radius: 25px;
+  padding: 40px;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid var(--neu-bg);
+  border-top: 6px solid var(--neu-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+
+/* ── Tab content ─────────────────────────────── */
+.tab-content {
+  position: relative !important;
+  transform: translateZ(0) !important;
+  min-height: 500px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 20px 0;
+  background: transparent;
+}
+
+/* ── Responsive ──────────────────────────────── */
+@media (max-width: 768px) {
+  .staff-profile-template-container { padding: 10px !important; }
+  .profile-header { padding: 20px; border-radius: 20px; }
+  .info-section { padding: 20px; }
+  .info-section h3 { font-size: 20px; }
+}
+
+@media (max-width: 576px) {
+  .info-section h3 { font-size: 18px; }
+}
+
+/* ── Accessibility: reduced motion ───────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
