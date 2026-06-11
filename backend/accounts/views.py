@@ -4,10 +4,14 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from django.contrib.auth import update_session_auth_hash
 import requests
 
 from .models import User, ROLE_CHOICES
 from .serializers import LoginSerializer, UserSerializer, UserCreateSerializer
+from accounts.middleware.default_password import DefaultPasswordMiddleware
 
 
 @api_view(['POST'])
@@ -60,7 +64,6 @@ def update_profile(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_user(request):
-    
     """ADMIN only — create a new system user."""
     if not (request.user.has_role('ADMIN') or request.user.has_role('CP_HRM')):
         return Response({'error': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
@@ -68,7 +71,6 @@ def create_user(request):
     serializer = UserCreateSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-
         return Response({
             "user_id": user.id,
             "full_name": user.get_full_name(),
@@ -77,6 +79,7 @@ def create_user(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -87,6 +90,8 @@ def list_users(request):
     if role:
         qs = qs.filter(role=role.upper())
     return Response(UserSerializer(qs, many=True).data)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def lookup_user_by_force_number(request):
@@ -105,7 +110,6 @@ def lookup_user_by_force_number(request):
         return Response({'error': 'User not found.'}, status=404)
 
 
-
 HRMIS_TO_USER_MAP = {
     "email": "email",
     "force_number": "force_number",
@@ -122,6 +126,8 @@ HRMIS_TO_USER_MAP = {
     "photo": "profile_photo",
     "signature": "signature",
 }
+
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def sync_user_with_hrmis(request, user_id):
@@ -141,7 +147,7 @@ def sync_user_with_hrmis(request, user_id):
                 {"message": "No data found in HRMIS."},
                 status=status.HTTP_404_NOT_FOUND
             )
-        
+
         info = hrmis_data["info"]
 
         # Map HRMIS fields to User fields, but skip 'role'
@@ -151,7 +157,6 @@ def sync_user_with_hrmis(request, user_id):
             if hrmis_field in info and info[hrmis_field] is not None:
                 setattr(user, user_field, info[hrmis_field])
 
-        # If you don’t want to update *any* profile fields, comment out user.save()
         user.save()
 
         # Decide recipients, status, and message dynamically
@@ -199,6 +204,7 @@ def sync_user_with_hrmis(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_user(request, user_id):
@@ -208,6 +214,8 @@ def get_user(request, user_id):
         return Response(UserSerializer(user).data)
     except User.DoesNotExist:
         return Response({'message': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def toggle_active(request, user_id):
@@ -232,37 +240,61 @@ def toggle_active(request, user_id):
             status=status.HTTP_404_NOT_FOUND
         )
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def change_password(request, user_id):
-    """Change a user's password securely."""
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response({'message': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+def change_password(request, user_id=None):
+    """
+    Change password for current user or another user (if admin).
+    """
+    # Determine which user to update
+    if user_id is None or user_id == request.user.id:
+        user = request.user
+    else:
+        # Only allow admins or superusers to change others' passwords
+        if not request.user.is_staff and not request.user.is_superuser:
+            return Response(
+                {"detail": "You do not have permission to change other users' passwords."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        user = get_object_or_404(User, id=user_id)
 
     current_password = request.data.get('current_password')
-    new_password     = request.data.get('new_password')
+    new_password = request.data.get('new_password')
 
     if not current_password or not new_password:
-        return Response({'message': 'Both current and new password are required.'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "Current password and new password are required."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    # ✅ Verify current password
     if not user.check_password(current_password):
-        return Response({'message': 'Current password is incorrect.'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "Current password is incorrect."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    # ✅ Optional: enforce minimum length or other validators
     if len(new_password) < 8:
-        return Response({'message': 'New password must be at least 8 characters.'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "New password must be at least 8 characters long."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
-    # ✅ Set new password
     user.set_password(new_password)
     user.save()
 
-    return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+    # Clear the default password flag
+    DefaultPasswordMiddleware.clear_flag(request)
+
+    # Keep the user logged in
+    update_session_auth_hash(request, user)
+
+    return Response({
+        "status": "success",
+        "message": "Nenosiri limebadilishwa kwa mafanikio!",
+        "detail": "Password changed successfully."
+    })
+
 
 def fetch_hrmis_data(check_number):
     response = requests.post(
@@ -274,8 +306,8 @@ def fetch_hrmis_data(check_number):
         },
         json={"checkno": check_number},
     )
-
     return response.json()
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -291,12 +323,11 @@ def update_role(request, user_id):
 
     new_role = request.data.get('role')
     if isinstance(new_role, dict):
-        new_role = new_role.get('role')  # ✅ unwrap nested dict
+        new_role = new_role.get('role')  # unwrap nested dict
 
     if not new_role:
         return Response({'message': 'Role is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
-    # Hard‑coded valid roles
     valid_roles = {
         "ADMIN",
         "RPC",
@@ -323,68 +354,3 @@ def update_role(request, user_id):
         },
         status=status.HTTP_200_OK
     )
-<<<<<<< HEAD
-=======
-
-
-
-from django.contrib import messages
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import update_session_auth_hash
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
-from .models import User
-
-# Import your custom User model and the middleware
-from .models import User  # Make sure this matches your AUTH_USER_MODEL
-from accounts.middleware.default_password import DefaultPasswordMiddleware
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def change_password(request, user_id=None):
-    """
-    Change password for current user or another user (if admin)
-    """
-    # Determine which user to update
-    if user_id is None or user_id == request.user.id:
-        user = request.user
-    else:
-        # Only allow admins or users with proper permission to change others' passwords
-        if not request.user.is_staff and not request.user.is_superuser:
-            return Response({"detail": "You do not have permission to change other users' passwords."}, status=403)
-        user = get_object_or_404(User, id=user_id)
-
-    # Get data from request
-    current_password = request.data.get('current_password')
-    new_password = request.data.get('new_password')
-
-    if not current_password or not new_password:
-        return Response({"detail": "Current password and new password are required."}, status=400)
-
-    # Verify current password
-    if not user.check_password(current_password):
-        return Response({"detail": "Current password is incorrect."}, status=400)
-
-    # Validate new password strength (optional but recommended)
-    if len(new_password) < 8:
-        return Response({"detail": "New password must be at least 8 characters long."}, status=400)
-
-    # Change password
-    user.set_password(new_password)
-    user.save()
-
-    # IMPORTANT: Clear the default password flag
-    DefaultPasswordMiddleware.clear_flag(request)
-
-    # Keep the user logged in
-    update_session_auth_hash(request, user)
-
-    # Success response for React
-    return Response({
-        "status": "success",
-        "message": "Nenosiri limebadilishwa kwa mafanikio!",
-        "detail": "Password changed successfully."
-    })
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
