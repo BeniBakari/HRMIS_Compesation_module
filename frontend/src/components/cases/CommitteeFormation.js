@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { casesApi, authApi } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import {
   Users,
   Trash2,
@@ -370,12 +371,10 @@ export default function CommitteeFormation({
   readOnly,
   committeeData,
 }) {
-  // ── If read-only, just render the view ──────────────────────────────────────
   if (readOnly) {
     return <CommitteeReadOnlyView committeeData={committeeData} />;
   }
 
-  // ── Formation form (existing logic, unchanged) ───────────────────────────────
   return (
     <CommitteeFormationForm
       caseId={caseId}
@@ -385,14 +384,46 @@ export default function CommitteeFormation({
   );
 }
 
-// ─── Separated form component to avoid hook-in-conditional issues ─────────────
+// ─── Separated form component ─────────────────────────────────────────────────
 function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
+  const { user } = useAuth(); // ← user aliyelogin
+
   const [members, setMembers] = useState([{ ...EMPTY_MEMBER }]);
   const [meetingDate, setMeetingDate] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [signature, setSignature] = useState("");
+  const [signature, setSignature] = useState("");       // base64 string ya signature
+  const [signatureLoading, setSignatureLoading] = useState(false);
+
+  // ─── Auto-fetch signature image from HRMIS on mount ─────────────────────
+  useEffect(() => {
+    const fetchSignature = async () => {
+      // 1. Kama user ana signature tayari iliyosync na HRMIS — tumia moja kwa moja
+      if (user?.signature) {
+        setSignature(user.signature);
+        return;
+      }
+
+      // 2. Fanya HRMIS lookup kwa check_number kupata signature ya kweli
+      const checkNo = user?.check_number;
+      if (!checkNo) return;
+
+      setSignatureLoading(true);
+      try {
+        const hrmis = await authApi.lookupCommitteeMember(String(checkNo));
+        if (hrmis.info.signature) {
+          setSignature(hrmis.info.signature);
+        }
+      } catch {
+        // HRMIS haikujibu — signature itabaki empty
+      } finally {
+        setSignatureLoading(false);
+      }
+    };
+
+    if (user) fetchSignature();
+  }, [user]);
 
   const updateMember = (idx, fields) => {
     setMembers((ms) => ms.map((m, i) => (i === idx ? { ...m, ...fields } : m)));
@@ -454,7 +485,7 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
     }
   };
 
-  // ─── Re-validate when role changes (if person already looked up) ──────────
+  // ─── Re-validate when role changes ───────────────────────────────────────
   const handleRoleChange = (idx, role) => {
     const member = members[idx];
     if (member._hrmisData) {
@@ -467,7 +498,7 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
     }
   };
 
-  // ─── Parse API error response into a readable string ─────────────────────
+  // ─── Parse API error ──────────────────────────────────────────────────────
   const parseApiError = (err) => {
     if (!err?.response?.data) {
       return typeof err?.message === "string"
@@ -494,7 +525,6 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
               .map((v) => {
                 if (typeof v === "string") return v;
                 if (typeof v === "object" && v !== null) {
-                  // e.g. { user_id: ["This field is required."] }
                   return Object.entries(v)
                     .map(
                       ([k2, v2]) =>
@@ -514,6 +544,7 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
     if (typeof d === "string") return d;
     return JSON.stringify(d, null, 2);
   };
+
   const handleSubmit = async () => {
     const validMembers = members.filter(
       (m) => m.force_number && m.role && m.validated,
@@ -532,9 +563,9 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
       );
     }
 
-    if (!meetingDate || !signature.trim()) {
+    if (!meetingDate || !signature) {
       return setError(
-        "Please specify a meeting date and provide your authorization signature.",
+        "Please specify a meeting date. Signature lazima ipatikane kutoka HRMIS.",
       );
     }
 
@@ -545,9 +576,6 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
       const resolvedMembers = [];
       const failedMembers = [];
 
-      // ==============================
-      // PROCESS MEMBERS SAFELY
-      // ==============================
       for (const m of validMembers) {
         const force_number = String(m.force_number).trim();
         const full_name = (m.full_name || "").trim();
@@ -555,19 +583,12 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
         try {
           let user_id = m.user_id || null;
 
-          // --------------------------
-          // 1. Already valid DB user
-          // --------------------------
           if (user_id && !String(user_id).startsWith("HRMIS_")) {
             resolvedMembers.push({ ...m, user_id });
             continue;
           }
 
-          // --------------------------
-          // 2. Try lookup existing user
-          // --------------------------
           let existingUser = null;
-
           try {
             existingUser = await authApi.lookupUserByForceNumber(force_number);
           } catch (_) {
@@ -579,20 +600,11 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
             continue;
           }
 
-          // --------------------------
-          // 3. Create user safely
-          // --------------------------
           const nameParts = full_name.split(/\s+/);
-          const first_name = nameParts[0] || force_number;
-          const middle_name = nameParts[1] || "";
-          const last_name = nameParts.slice(2).join(" ") || nameParts[1] || "-";
-
-          // const email =
-          //   `${force_number.toLowerCase().replace(/[^a-z0-9]/g, '.') }@tpf.go.tz`;
 
           const newUser = await authApi.createUserAsAdmin({
             force_number,
-            first_name,
+            first_name: nameParts[0] || force_number,
             middle_name: nameParts[1] || "",
             last_name: nameParts.slice(2).join(" ") || nameParts[1] || "-",
             email: m._hrmisData?.info?.email,
@@ -613,10 +625,7 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
             throw new Error("Invalid user creation response");
           }
 
-          resolvedMembers.push({
-            ...m,
-            user_id: newUser.user_id,
-          });
+          resolvedMembers.push({ ...m, user_id: newUser.user_id });
         } catch (err) {
           console.error("❌ Member failed:", {
             name: full_name,
@@ -636,12 +645,8 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
         }
       }
 
-      // ==============================
-      // FINAL VALIDATION
-      // ==============================
       if (resolvedMembers.length < 4) {
         console.error("FAILED MEMBERS:", failedMembers);
-
         return setError(
           `Committee incomplete. Failed members: ` +
             failedMembers
@@ -650,18 +655,12 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
         );
       }
 
-      // ==============================
-      // PAYLOAD
-      // ==============================
       const memberPayload = resolvedMembers.map((m) => ({
         force_number: String(m.force_number),
         role: String(m.role),
         user_id: m.user_id,
       }));
 
-      // ==============================
-      // SUBMIT
-      // ==============================
       await casesApi.formCommittee(caseId, {
         members: memberPayload,
         meeting_date: meetingDate,
@@ -1031,22 +1030,44 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
           <p
             style={{ fontSize: "11px", color: "#64748b", marginBottom: "15px" }}
           >
-            Andika jina lako kamili au sahihi yako ya mamlaka kuidhinisha
-            uundaji na utumaji wa kamati hii.
+            Signature is automatically retrieved from HRMIS.
           </p>
-          <input
-            className="form-control"
-            type="text"
+
+          {/* ── Signature image — inatoka HRMIS automatically ── */}
+          <div
             style={{
               maxWidth: "400px",
-              fontFamily: "Georgia, serif",
-              fontSize: "15px",
-              letterSpacing: "0.5px",
+              minHeight: "80px",
+              background: "white",
+              border: "1px solid #e2e8f0",
+              borderRadius: "12px",
+              padding: "12px 16px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
-            placeholder="Andika sahihi yako hapa..."
-            value={signature}
-            onChange={(e) => setSignature(e.target.value)}
-          />
+          >
+            {signatureLoading ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#94a3b8", fontSize: "12px" }}>
+                <Loader2 size={14} className="spinner" />
+                Inakusanya sahihi kutoka HRMIS...
+              </div>
+            ) : signature ? (
+              <img
+                src={`data:image/png;base64,${signature}`}
+                alt="Authorized Signature"
+                style={{
+                  maxHeight: "70px",
+                  maxWidth: "100%",
+                  objectFit: "contain",
+                }}
+              />
+            ) : (
+              <span style={{ fontSize: "12px", color: "#94a3b8", fontStyle: "italic" }}>
+                Sahihi haijapatikana kutoka HRMIS
+              </span>
+            )}
+          </div>
         </div>
 
         <div

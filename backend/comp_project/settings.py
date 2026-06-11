@@ -41,10 +41,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-<<<<<<< HEAD
-=======
-    
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
     'accounts.middleware.default_password.DefaultPasswordMiddleware',
 ]
 
@@ -81,15 +77,9 @@ WSGI_APPLICATION = 'comp_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-<<<<<<< HEAD
         'NAME': 'compensation_db',     
         'USER': 'root',      
         'PASSWORD': 'root', 
-=======
-        'NAME': 'compensation',     
-        'USER': 'root',      
-        'PASSWORD': '', 
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c
         'HOST': 'localhost',          
         'PORT': '3306',               
     }
@@ -163,8 +153,6 @@ X_FRAME_OPTIONS = 'ALLOWALL'
 # Leave blank to use manual soldier detail entry.
 HR_CORE_API_URL = config('HR_CORE_API_URL', default='http://192.168.10.12')
 HR_CORE_API_TOKEN = config('HR_CORE_API_TOKEN', default='')
-<<<<<<< HEAD
-=======
 
 
 
@@ -180,4 +168,3 @@ DEFAULT_PASSWORD_EXEMPT_URLS = [
     "/api/token/",
     "/api/token/refresh/",
 ]
->>>>>>> f8c8638c1dbb0e0402d72805018abfe37a42403c

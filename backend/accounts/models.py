@@ -68,6 +68,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=20, blank=True, default='')
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
+   # ✅ NEW: Force password change on first login
+    must_change_password = models.BooleanField(default=False)
     profile_photo = models.TextField(blank=True, default='')  # Base64-encoded image
     signature = models.TextField(blank=True, default='')      # Base64-encoded image
     date_joined = models.DateTimeField(default=timezone.now)

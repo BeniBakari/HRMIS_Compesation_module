@@ -19,7 +19,7 @@ import { STATUS_META, DOCUMENT_LABELS, MAX_AWARD } from "./constants";
 import {
   FileText, Info, ShieldCheck, Users, Calculator, Receipt,
   Edit3, History, Download, TrendingUp, Shield, User, Eye,
-  ChevronLeft, ChevronRight,AlertTriangle,
+  ChevronLeft, ChevronRight, AlertTriangle,
 } from "lucide-react";
 
 import "./CaseDetail.css";
@@ -152,12 +152,12 @@ export default function CaseDetail() {
                 meeting_date: c.meeting_date || null,
                 notes: c.notes || "",
                 members: c.committee_members.map((m) => ({
-                  force_number: m.force_number || "",
-                  full_name:    m.user_display  || "",
-                  rank:         m.rank          || "",
-                  region:       m.region        || "",
-                  role:         m.role          || "",
-                  has_submitted: m.has_submitted || false,
+                  force_number:  m.force_number  || "",
+                  full_name:     m.user_display   || "",
+                  rank:          m.rank           || "",
+                  region:        m.region         || "",
+                  role:          m.role           || "",
+                  has_submitted: m.has_submitted  || false,
                 })),
               }
             : null;
@@ -192,20 +192,20 @@ export default function CaseDetail() {
   const meta = STATUS_META[c.status] || { label: c.status, badgeClass: "badge-secondary", icon: <Info size={14} /> };
 
   const showHQ =
-    (perms.hasRole("COMPENSATION_HQ_CO")    && ["SUBMITTED", "UNDER_REVIEW", "HQ_APPROVED"].includes(c.status?.trim().toUpperCase())) ||
-    (perms.hasRole("COMPENSATION_HQ")        && ["SUBMITTED", "UNDER_REVIEW"].includes(c.status?.trim().toUpperCase())) ||
-    (perms.hasRole("COMPENSATION_HQ_SO")     && ["CO_APPROVED", "SO_REVIEWED"].includes(c.status?.trim().toUpperCase())) ||
-    (perms.hasRole("COMPENSATION_HQ_CHIEF")  && ["SO_REVIEWED", "PENDING_CP_HRM"].includes(c.status?.trim().toUpperCase()));
+    (perms.hasRole("COMPENSATION_HQ_CO")   && ["SUBMITTED", "UNDER_REVIEW", "HQ_APPROVED"].includes(c.status?.trim().toUpperCase())) ||
+    (perms.hasRole("COMPENSATION_HQ")       && ["SUBMITTED", "UNDER_REVIEW"].includes(c.status?.trim().toUpperCase())) ||
+    (perms.hasRole("COMPENSATION_HQ_SO")    && ["CO_APPROVED", "SO_REVIEWED"].includes(c.status?.trim().toUpperCase())) ||
+    (perms.hasRole("COMPENSATION_HQ_CHIEF") && ["SO_REVIEWED", "PENDING_CP_HRM"].includes(c.status?.trim().toUpperCase()));
 
-  const showComm       = (perms.canFormCommittee && c.status === "PENDING_CP_HRM") || (perms.canViewCommittee && ["COMMITTEE_ASSIGNED", "ASSESSED"].includes(c.status));
-  const showAssess     = perms.canSubmitAssessment && c.status === "COMMITTEE_ASSIGNED";
+  const showComm          = (perms.canFormCommittee && c.status === "PENDING_CP_HRM") || (perms.canViewCommittee && ["COMMITTEE_ASSIGNED", "ASSESSED"].includes(c.status));
+  const showAssess        = perms.canSubmitAssessment && c.status === "COMMITTEE_ASSIGNED";
   const committeeReadOnly = ["COMMITTEE_ASSIGNED", "ASSESSED"].includes(c.status);
 
   const TABS = [
-    { id: "details",   label: "Overview",       icon: <Info size={16} /> },
-    ...(showHQ     ? [{ id: "validate",  label: "Validation",    icon: <ShieldCheck size={16} /> }] : []),
-    ...(showComm   ? [{ id: "committee", label: "Committees",    icon: <Users size={16} /> }] : []),
-    ...(showAssess ? [{ id: "assess",    label: "Assessment",    icon: <Calculator size={16} /> }] : []),
+    { id: "details",   label: "Overview",        icon: <Info size={16} /> },
+    ...(showHQ     ? [{ id: "validate",  label: "Validation",     icon: <ShieldCheck size={16} /> }] : []),
+    ...(showComm   ? [{ id: "committee", label: "Committees",     icon: <Users size={16} /> }] : []),
+    ...(showAssess ? [{ id: "assess",    label: "Assessment",     icon: <Calculator size={16} /> }] : []),
     ...(data.assessment ? [{ id: "result", label: "Agreed Amount", icon: <Receipt size={16} /> }] : []),
     ...(c.status === "RETURNED" && perms.canSubmitCases ? [{ id: "resubmit", label: "Fix & Resubmit", icon: <Edit3 size={16} /> }] : []),
     ...(perms.canViewAuditLogs ? [{ id: "audit", label: "Audit Timeline", icon: <History size={16} /> }] : []),
@@ -355,30 +355,45 @@ function DetailsTab({ c, setPreviewDoc }) {
   return (
     <div className="tab-content" style={{ animation: "fadeIn 0.4s" }}>
 
-{c.status === "REJECTED" && c.review_comments && (
-  <div style={{
-    marginBottom: "25px",
-    padding: "20px 25px",
-    background: "#fff7ed",
-    border: "1.5px solid #f97316",
-    borderRadius: "16px",
-    display: "flex",
-    gap: "15px",
-    alignItems: "flex-start",
-  }}>
-    <AlertTriangle size={22} color="#f97316" style={{ flexShrink: 0, marginTop: "2px" }} />
-    <div>
-      <div style={{ fontWeight: 600, color: "#9a3412", fontSize: "13px", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
-        Case Rejected
-      </div>
-      <p style={{ margin: 0, fontSize: "14px", color: "#7c2d12", lineHeight: "1.6" }}>
-        {c.review_comments}
-      </p>
-    </div>
-  </div>
-)}
+      {/* Rejected banner */}
+      {c.status === "REJECTED" && c.review_comments && (
+        <div style={{
+          marginBottom: "25px", padding: "20px 25px",
+          background: "#fff7ed", border: "1.5px solid #f97316",
+          borderRadius: "16px", display: "flex", gap: "15px", alignItems: "flex-start",
+        }}>
+          <AlertTriangle size={22} color="#f97316" style={{ flexShrink: 0, marginTop: "2px" }} />
+          <div>
+            <div style={{ fontWeight: 600, color: "#9a3412", fontSize: "13px", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Case Rejected
+            </div>
+            <p style={{ margin: 0, fontSize: "14px", color: "#7c2d12", lineHeight: "1.6" }}>
+              {c.review_comments}
+            </p>
+          </div>
+        </div>
+      )}
 
-        
+      {/* Returned banner */}
+      {c.status === "RETURNED" && (c.review_comments || c.hq_comments || c.co_comments || c.so_comments || c.chief_comments) && (
+        <div style={{
+          marginBottom: "25px", padding: "20px 25px",
+          background: "#eff6ff", border: "1.5px solid #3b82f6",
+          borderRadius: "16px", display: "flex", gap: "15px", alignItems: "flex-start",
+        }}>
+          <AlertTriangle size={22} color="#3b82f6" style={{ flexShrink: 0, marginTop: "2px" }} />
+          <div>
+            <div style={{ fontWeight: 600, color: "#1e40af", fontSize: "13px", marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Case Returned — Reason
+            </div>
+            <p style={{ margin: 0, fontSize: "14px", color: "#1e3a8a", lineHeight: "1.6" }}>
+              {c.review_comments || c.hq_comments || c.co_comments || c.so_comments || c.chief_comments}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Circumstances */}
       <div className="info-section">
         <h3>CIRCUMSTANCES OF INCIDENT</h3>
         <div style={{ background: "#f8fafc", padding: "25px", borderRadius: "16px", border: "1px solid #e2e8f0" }}>
@@ -397,19 +412,62 @@ function DetailsTab({ c, setPreviewDoc }) {
         </div>
       </div>
 
+      {/* Documents */}
       <div className="info-section">
         <h3>SUPPORTING EVIDENCE & FILES</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px", marginTop: "20px" }}>
+
+        {/* Summary count kama kuna rejected docs */}
+        {c.documents?.some((d) => d.is_rejected) && (
+          <div style={{
+            marginBottom: "16px", padding: "12px 18px",
+            background: "#fff1f2", border: "1px solid #fca5a5",
+            borderRadius: "12px", display: "flex", alignItems: "center", gap: "10px",
+          }}>
+            <AlertTriangle size={16} color="#dc2626" />
+            <span style={{ fontSize: "13px", color: "#b91c1c", fontWeight: 500 }}>
+              {c.documents.filter((d) => d.is_rejected).length} document(s) rejected — please upload corrected versions and resubmit.
+            </span>
+          </div>
+        )}
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px", marginTop: "10px" }}>
           {c.documents?.map((doc) => (
             <div
               key={doc.id}
               className="document-card-premium"
               onClick={() => setPreviewDoc(doc)}
-              style={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "20px", padding: "20px", display: "flex", alignItems: "center", gap: "18px", cursor: "pointer", transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)" }}
+              style={{
+                background: doc.is_rejected ? "#fff1f2" : "#ffffff",
+                border: `1px solid ${doc.is_rejected ? "#fca5a5" : doc.is_verified ? "#86efac" : "#e2e8f0"}`,
+                borderRadius: "20px",
+                padding: "20px",
+                display: "flex",
+                alignItems: "center",
+                gap: "18px",
+                cursor: "pointer",
+                transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+                boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
+              }}
             >
-              <div className="doc-icon-container" style={{ width: "50px", height: "50px", background: "rgba(28,35,109,0.05)", borderRadius: "14px", display: "flex", alignItems: "center", justifyContent: "center", color: "#1c236d" }}>
+              {/* Icon */}
+              <div
+                className="doc-icon-container"
+                style={{
+                  width: "50px", height: "50px", borderRadius: "14px",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  flexShrink: 0,
+                  background: doc.is_rejected
+                    ? "rgba(239,68,68,0.1)"
+                    : doc.is_verified
+                    ? "rgba(34,197,94,0.1)"
+                    : "rgba(28,35,109,0.05)",
+                  color: doc.is_rejected ? "#ef4444" : doc.is_verified ? "#16a34a" : "#1c236d",
+                }}
+              >
                 <FileText size={24} />
               </div>
+
+              {/* Text */}
               <div style={{ flex: 1, overflow: "hidden" }}>
                 <div style={{ fontSize: "13px", fontWeight: 500, color: "#1c236d", marginBottom: "4px" }}>
                   {DOCUMENT_LABELS[doc.doc_type] || doc.doc_type}
@@ -417,12 +475,55 @@ function DetailsTab({ c, setPreviewDoc }) {
                 <div style={{ fontSize: "12px", color: "#64748b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {doc.original_filename}
                 </div>
+
+                {/* Rejection reason */}
+                {doc.is_rejected && doc.rejection_reason && (
+                  <div style={{
+                    marginTop: "6px", fontSize: "11px", color: "#b91c1c",
+                    display: "flex", alignItems: "flex-start", gap: "5px", lineHeight: "1.4",
+                  }}>
+                    <AlertTriangle size={11} style={{ flexShrink: 0, marginTop: "1px" }} />
+                    <span>{doc.rejection_reason}</span>
+                  </div>
+                )}
               </div>
-              <Eye size={18} style={{ color: "#94a3b8" }} />
+
+              {/* Status badge + eye icon */}
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "6px", flexShrink: 0 }}>
+                {doc.is_rejected ? (
+                  <span style={{
+                    fontSize: "10px", fontWeight: 600, color: "#b91c1c",
+                    background: "#fee2e2", padding: "3px 8px", borderRadius: "20px",
+                    textTransform: "uppercase", letterSpacing: "0.5px",
+                  }}>
+                    Rejected
+                  </span>
+                ) : doc.is_verified ? (
+                  <span style={{
+                    fontSize: "10px", fontWeight: 600, color: "#15803d",
+                    background: "#dcfce7", padding: "3px 8px", borderRadius: "20px",
+                    textTransform: "uppercase", letterSpacing: "0.5px",
+                  }}>
+                    Verified
+                  </span>
+                ) : (
+                  <span style={{
+                    fontSize: "10px", fontWeight: 600, color: "#92400e",
+                    background: "#fef3c7", padding: "3px 8px", borderRadius: "20px",
+                    textTransform: "uppercase", letterSpacing: "0.5px",
+                  }}>
+                    Pending
+                  </span>
+                )}
+                <Eye size={16} style={{ color: "#94a3b8" }} />
+              </div>
             </div>
           ))}
+
           {(!c.documents || c.documents.length === 0) && (
-            <div className="no-data-inline" style={{ gridColumn: "span 2" }}>No documentation attached.</div>
+            <div className="no-data-inline" style={{ gridColumn: "span 2" }}>
+              No documentation attached.
+            </div>
           )}
         </div>
       </div>
@@ -475,7 +576,7 @@ const LOCAL_STYLES = `
   .tab-btn-neu { display:flex; align-items:center; gap:15px; padding:12px 18px; border-radius:12px; border:none; background:transparent; cursor:pointer; color:#64748b; font-weight:500; text-align:left; transition:all 0.3s ease; width:100%; }
   .tab-btn-neu:hover { background:#f8fafc; color:#1c236d; }
   .tab-btn-neu.active { background:var(--neu-primary); color:white !important; box-shadow:0 10px 20px rgba(28,35,109,0.2); }
-  .document-card-premium:hover { transform:translateY(-3px); box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); border-color:#1c236d !important; }
+  .document-card-premium:hover { transform:translateY(-3px); box-shadow:0 20px 25px -5px rgba(0,0,0,0.1); }
   .document-card-premium:hover .doc-icon-container { background:#1c236d !important; color:white !important; }
   .no-data-inline { padding:40px; background:#f8fafc; border:1px dashed #cbd5e1; border-radius:16px; text-align:center; color:#94a3b8; font-style:italic; font-size:13px; }
 `;
