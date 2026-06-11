@@ -12,8 +12,8 @@ export default function CalculationView({ assessment, caseData }) {
         )
       : 0;
 
-  const rpcMember = members.find((m) => m.role === "RPC");
-  const agreedAmount = rpcMember?.agreed_amount ? Number(rpcMember.agreed_amount) : null;
+  const chairman = members.find((m) => m.role === "CHAIRMAN");
+  const agreedAmount = chairman?.agreed_amount ? Number(chairman.agreed_amount) : null;
 
   const suggestedAmt =
     agreedAmount != null

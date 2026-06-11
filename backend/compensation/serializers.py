@@ -334,6 +334,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
                 "id":                m.id,
                 "user_id":           m.user_id,
                 "role":              m.role,
+                "rank":              m.user.rank if m.user else None,
                 "full_name":         m.user.get_full_name() if m.user else None,
                 "force_number":      m.user.force_number if m.user else None,
                 "signature":         m.user.signature if m.user else None,

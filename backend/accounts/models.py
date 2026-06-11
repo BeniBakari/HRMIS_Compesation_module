@@ -16,8 +16,8 @@ ROLE_CHOICES = [
 ]
 
 RANK_CHOICES = [
-    ('CP_ADMINISTRATION', 'Inspector General of Police'),
-    ('DCP_ADMINISTRATION', 'Deputy CP_ADMINISTRATION'),
+    ('CP', 'Inspector General of Police'),
+    ('DCP', 'Deputy CP_ADMINISTRATION'),
     ('CASP', 'Commissioner of Police'),
     ('SACP', 'Senior Assistant Commissioner'),
     ('ACP', 'Assistant Commissioner'),
@@ -100,7 +100,8 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.first_name
-
+    def get_rank(self):
+        return self.rank
     def get_initials(self):
         parts = [self.first_name, self.last_name]
         return ''.join(p[0].upper() for p in parts if p)

@@ -77,9 +77,9 @@ WSGI_APPLICATION = 'comp_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'compensation_db',     
+        'NAME': 'compensation',     
         'USER': 'root',      
-        'PASSWORD': 'root', 
+        'PASSWORD': '', 
         'HOST': 'localhost',          
         'PORT': '3306',               
     }
