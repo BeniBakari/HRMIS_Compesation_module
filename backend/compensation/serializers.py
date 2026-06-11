@@ -21,6 +21,8 @@ class CaseDocumentSerializer(serializers.ModelSerializer):
             'original_filename', 'file_size',
             'uploaded_by_display', 'uploaded_at',
             'is_verified', 'verified_at',
+            'is_rejected',        # ← MPYA: kuonyesha kama document imekataliwa
+            'rejection_reason',   # ← MPYA: sababu ya kukataliwa
         ]
         read_only_fields = ['id', 'uploaded_at', 'verified_at']
 
@@ -28,19 +30,17 @@ class CaseDocumentSerializer(serializers.ModelSerializer):
         return obj.uploaded_by.get_full_name() if obj.uploaded_by else None
 
 
-import base64
-
 class DocumentUploadSerializer(serializers.Serializer):
     doc_type = serializers.ChoiceField(choices=[
         'OB_EXTRACT', 'PF3', 'PF90', 'PF115',
         'MEDICAL_REPORT', 'POSTMORTEM_REPORT', 'DEATH_CERTIFICATE', 'NATIONAL_ID',
     ])
-    file = serializers.CharField()  # ✅ base64 string
+    file     = serializers.CharField()  # base64 string
     filename = serializers.CharField(max_length=255, required=False, default='document')
 
     ALLOWED_MIME_TYPES = {
         "application/pdf",
-        "image/jpeg",   # covers .jpg and .jpeg
+        "image/jpeg",
         "image/png",
     }
     MAX_SIZE_BYTES = 10 * 1024 * 1024
@@ -75,21 +75,21 @@ class DocumentUploadSerializer(serializers.Serializer):
                 f"File too large. Maximum allowed: {self.MAX_SIZE_BYTES // (1024 * 1024)} MB."
             )
 
-        # ✅ store validated info for later use
         self._validated_mime_type = mime_type
-        self._validated_size = file_size
+        self._validated_size      = file_size
 
-        return encoded  # return the raw base64 payload
+        return encoded
 
     def validate(self, data):
         try:
             decoded = base64.b64decode(data['file'])
             data['file_content_type'] = getattr(self, '_validated_mime_type', 'application/octet-stream')
-            data['file_size'] = getattr(self, '_validated_size', len(decoded))
+            data['file_size']         = getattr(self, '_validated_size', len(decoded))
         except Exception:
             data['file_content_type'] = 'application/octet-stream'
-            data['file_size'] = 0
+            data['file_size']         = 0
         return data
+
 
 # ── Committee ─────────────────────────────────────────────────────────────────
 
@@ -99,14 +99,22 @@ class CommitteeMemberSerializer(serializers.ModelSerializer):
     force_number        = serializers.SerializerMethodField()
     rank                = serializers.SerializerMethodField()
     region              = serializers.SerializerMethodField()
+<<<<<<< HEAD
     signature              = serializers.SerializerMethodField()
+=======
+    signature           = serializers.SerializerMethodField()
+>>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 
     class Meta:
         model  = CommitteeMember
         fields = [
             'id', 'user_id', 'user_display', 'role', 'assigned_at',
             'appointment_letter_path', 'has_submitted_input',
+<<<<<<< HEAD
             'force_number', 'rank', 'region', 'signature'
+=======
+            'force_number', 'rank', 'region', 'signature',
+>>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
         ]
         read_only_fields = ['id', 'assigned_at']
 
@@ -128,7 +136,12 @@ class CommitteeMemberSerializer(serializers.ModelSerializer):
     def get_signature(self, obj):
         if not obj.user:
             return None
+<<<<<<< HEAD
         return obj.user.signature  # This will return a data URI or empty string
+=======
+        return obj.user.signature
+
+>>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
     def get_region(self, obj):
         if not obj.user:
             return None
@@ -149,7 +162,11 @@ class CommitteeMemberInputSerializer(serializers.Serializer):
 class CommitteeFormationSerializer(serializers.Serializer):
     meeting_date      = serializers.DateField()
     digital_signature = serializers.CharField(
+<<<<<<< HEAD
          required=False, allow_blank=True, default=''
+=======
+        required=False, allow_blank=True, default=''
+>>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
     )
     members = CommitteeMemberInputSerializer(many=True, min_length=4, max_length=4)
 
@@ -161,7 +178,7 @@ class CommitteeFormationSerializer(serializers.Serializer):
     def validate_members(self, members):
         from accounts.models import User
         required = {'RPC', 'HQ_REPRESENTATIVE', 'OCD', 'REGISTERED_DOCTOR'}
-        seen = set()
+        seen     = set()
 
         for m in members:
             if 'role' not in m:
@@ -184,7 +201,8 @@ class CommitteeFormationSerializer(serializers.Serializer):
                 user = User.objects.filter(force_number=m['force_number']).first()
                 if not user:
                     raise serializers.ValidationError(
-                        f"User with force number {m['force_number']} not found in system. Please register them first."
+                        f"User with force number {m['force_number']} not found in system. "
+                        f"Please register them first."
                     )
             else:
                 raise serializers.ValidationError("Each member needs 'user_id' or 'force_number'.")
@@ -220,9 +238,11 @@ class AssessmentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Assessment
-        fields = ['id', 'final_injury_percentage', 'final_severity_class',
-                  'suggested_amount', 'currency', 'requires_manual_review',
-                  'report_path', 'computed_at', 'formula_detail']
+        fields = [
+            'id', 'final_injury_percentage', 'final_severity_class',
+            'suggested_amount', 'currency', 'requires_manual_review',
+            'report_path', 'computed_at', 'formula_detail',
+        ]
 
     def get_formula_detail(self, obj):
         if not obj.formula:
@@ -244,9 +264,11 @@ class FormulaSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = CompensationFormula
-        fields = ['id', 'incident_type', 'severity_class', 'base_amount',
-                  'multiplier', 'currency', 'effective_from', 'effective_to',
-                  'description', 'created_by_display', 'created_at']
+        fields = [
+            'id', 'incident_type', 'severity_class', 'base_amount',
+            'multiplier', 'currency', 'effective_from', 'effective_to',
+            'description', 'created_by_display', 'created_at',
+        ]
         read_only_fields = ['id', 'created_at']
 
     def get_created_by_display(self, obj):
@@ -267,8 +289,10 @@ class AuditLogSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = AuditLog
-        fields = ['id', 'actor_display', 'action', 'from_status', 'to_status',
-                  'metadata', 'ip_address', 'created_at']
+        fields = [
+            'id', 'actor_display', 'action', 'from_status', 'to_status',
+            'metadata', 'ip_address', 'created_at',
+        ]
 
     def get_actor_display(self, obj):
         return obj.actor.get_full_name() if obj.actor else 'System'
@@ -296,6 +320,10 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'nature_of_incident', 'duty_context',
             'submitted_by_display', 'submitted_at',
             'review_comments', 'reviewed_at',
+            'hq_comments', 'hq_reviewed_at',
+            'co_comments', 'co_reviewed_at',
+            'so_comments', 'so_reviewed_at',
+            'chief_comments', 'chief_reviewed_at',
             'meeting_date', 'igp_approved_at',
             'created_at', 'updated_at',
             'required_documents',
@@ -406,16 +434,37 @@ class CaseSubmissionSerializer(serializers.Serializer):
 
 class HQReviewSerializer(serializers.Serializer):
     DECISIONS = [('APPROVED', 'Approved'), ('RETURNED', 'Returned'), ('REJECTED', 'Rejected')]
-    decision      = serializers.ChoiceField(choices=DECISIONS)
-    comments      = serializers.CharField(required=False, allow_blank=True, default='')
-    justification = serializers.CharField(required=False, allow_blank=True, default='')
+
+    decision           = serializers.ChoiceField(choices=DECISIONS)
+    comments           = serializers.CharField(required=False, allow_blank=True, default='')
+    justification      = serializers.CharField(required=False, allow_blank=True, default='')
+
+    # ── MPYA: IDs za documents zilizokataliwa ─────────────────────────────────
+    rejected_documents = serializers.ListField(
+        child=serializers.IntegerField(),
+        required=False,
+        default=list,
+        help_text="Orodha ya IDs za documents zilizo na makosa"
+    )
 
     def validate(self, data):
         d = data['decision']
-        if d == 'RETURNED' and not data.get('comments', '').strip():
-            raise serializers.ValidationError(
-                {'comments': 'Return comments are required.'})
+
+        # RETURNED: lazima aandike comment NA achague documents
+        if d == 'RETURNED':
+            if not data.get('comments', '').strip():
+                raise serializers.ValidationError(
+                    {'comments': 'Return comments are required.'}
+                )
+            if not data.get('rejected_documents'):
+                raise serializers.ValidationError(
+                    {'rejected_documents': 'Tafadhali chagua documents zilizo na makosa.'}
+                )
+
+        # REJECTED: lazima aandike justification
         if d == 'REJECTED' and not data.get('comments', '').strip():
             raise serializers.ValidationError(
-                {'justification': 'Rejection comments are required.'})
+                {'justification': 'Rejection comments are required.'}
+            )
+
         return data

@@ -2,12 +2,17 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Layout from './components/layout/Layout';
+import ChangePasswordModal from './components/ChangePasswordModal';
 
 // ── Lazy-loaded pages ──────────────────────────────────────────────────────
 const LoginPage          = React.lazy(() => import('./pages/Login'));
 const DashboardPage      = React.lazy(() => import('./pages/Dashboard'));
 const CaseListPage       = React.lazy(() => import('./pages/CaseList'));
+<<<<<<< HEAD
 const CaseDetailPage     = React.lazy(() => import('./pages/CaseDetail'));
+=======
+const CaseDetailPage     = React.lazy(() => import('./components/cases/CaseDetail'));
+>>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 const CaseSubmissionPage = React.lazy(() => import('./pages/CaseSubmission'));
 const AssignedCasesPage  = React.lazy(() => import('./pages/AssignedCases'));
 const ReportsPage        = React.lazy(() => import('./pages/Reports'));
@@ -46,13 +51,14 @@ export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+        <ChangePasswordModal />
         <React.Suspense fallback={null}>
           <Routes>
 
             {/* Public */}
             <Route element={<PublicRoute />}>
               <Route path="/login" element={<LoginPage />} />
-               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
             </Route>
 
             {/* Private — all wrapped in Layout */}
@@ -67,16 +73,9 @@ export default function App() {
                 <Route path="/reports"         element={<ReportsPage />} />
                 <Route path="/formulas"        element={<FormulaPage />} />
                 <Route path="/notifications"   element={<NotificationsPage />} />
-
-                {/* User management list */}
                 <Route path="/users"           element={<UsersPage />} />
-
-                {/* Own profile — no userId param → shows current user */}
                 <Route path="/profile"         element={<ProfilePage />} />
-
-                {/* Another officer's profile — userId param → fetches that user */}
                 <Route path="/users/:userId"   element={<ProfilePage />} />
-                
               </Route>
             </Route>
 

@@ -15,6 +15,7 @@ urlpatterns = [
     path('users/<int:user_id>/sync/', views.sync_user_with_hrmis, name='user-sync-hrmis'),
     path('users/<int:user_id>/', views.get_user, name='auth_get_user'),
     path('users/<int:user_id>/toggle-active/', views.toggle_active, name='auth_toggle_active'),
+    path('users/change-password/', views.change_password, name='auth_change_password_self'),
     path('users/<int:user_id>/change-password/', views.change_password, name='auth_change_password'),
     path('users/<int:user_id>/update-role/', views.update_role, name='auth_update_role'),
 

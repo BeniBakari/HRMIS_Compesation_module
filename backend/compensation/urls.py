@@ -118,4 +118,7 @@ urlpatterns = [
         'notifications/read-all/',
         views.mark_all_read
     ),
+    path(
+        'cases/<str:case_id>/documents/<int:doc_id>/reject/',
+         views.reject_document),
 ]

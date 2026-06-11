@@ -99,6 +99,7 @@ def submit_case(request):
         duty_context         = d['duty_context'],
         status               = 'SUBMITTED',
         submitted_by         = request.user,
+        region               = request.user.station or '',
     )
 
     AuditLog.objects.create(
@@ -122,24 +123,22 @@ def submit_case(request):
         status=status.HTTP_201_CREATED,
     )
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsRPC])
 def upload_document(request, case_id):
     try:
-        #  Ensure case exists
         try:
             case = CompensationCase.objects.get(case_id=case_id)
         except CompensationCase.DoesNotExist:
             return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        #  Permission check
         if case.submitted_by != request.user and request.user.role != 'ADMIN':
             return Response(
                 {'error': 'You can only upload documents for your own cases.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        #  Status check
         if case.status not in ('SUBMITTED', 'RETURNED', 'UNDER_REVIEW'):
             return Response(
                 {'error': f'Documents can only be uploaded when SUBMITTED, RETURNED, or UNDER_REVIEW. '
@@ -147,32 +146,32 @@ def upload_document(request, case_id):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        #  Validate payload with serializer
         s = DocumentUploadSerializer(data=request.data)
         if not s.is_valid():
             return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
         doc_type    = s.validated_data['doc_type']
-        file_base64 = s.validated_data['file']          # raw base64 payload (already validated)
+        file_base64 = s.validated_data['file']
         filename    = s.validated_data.get('filename') or 'document'
         file_size   = s.validated_data.get('file_size', 0)
         mime_type   = s.validated_data.get('file_content_type', 'application/octet-stream')
 
-        #  Ensure doc_type is required for this case type
         if doc_type not in REQUIRED_DOCS.get(case.incident_type, []):
             return Response(
                 {'error': f"'{doc_type}' is not required for {case.incident_type} cases."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        #  Remove any existing document of same type
         CaseDocument.objects.filter(case=case, doc_type=doc_type).delete()
 
-        #  Store base64 string directly in DB
         doc = CaseDocument.objects.create(
             case              = case,
             doc_type          = doc_type,
-            file              = file_base64,   
+            file              = file_base64,
             original_filename = filename,
             file_size         = file_size,
             file_content_type = mime_type,
@@ -180,6 +179,11 @@ def upload_document(request, case_id):
             is_verified       = False,
             verified_by       = None,
             verified_at       = None,
+            # Wakati RPC anapopakia upya, futa hali ya rejection iliyopita
+            is_rejected       = False,
+            rejection_reason  = '',
+            rejected_by       = None,
+            rejected_at       = None,
         )
 
         from .serializers import CaseDocumentSerializer
@@ -230,11 +234,7 @@ def resubmit_case(request, case_id):
         ip_address=ip,
     )
 
-    send_notification(
-        case,
-        'CASE_RESUBMITTED',
-        _hq_users_only()
-    )
+    send_notification(case, 'CASE_RESUBMITTED', _hq_users_only())
 
     return Response({
         'case_id': case.case_id,
@@ -253,46 +253,23 @@ def list_cases(request):
     qs = CompensationCase.objects.all()
 
     if role in ('RPC', 'UNIT_COMMANDER'):
-        qs = qs.filter(submitted_by=user)
+        user_region = user.station or ''
+        if user_region:
+            qs = qs.filter(region=user_region)
+        else:
+            qs = qs.filter(submitted_by=user)
 
     elif role == 'COMPENSATION_HQ':
-        qs = qs.filter(
-            status__in=[
-                'SUBMITTED',
-                'UNDER_REVIEW',
-                
-            ]
-        )
+        qs = qs.filter(status__in=['SUBMITTED', 'UNDER_REVIEW'])
 
     elif role == 'COMPENSATION_HQ_CO':
-        qs = qs.filter(
-            status__in=[
-                'HQ_APPROVED',
-                'CO_APPROVED',
-                'RETURNED',
-                'REJECTED',
-            ]
-        )
+        qs = qs.filter(status__in=['HQ_APPROVED', 'CO_APPROVED', 'RETURNED', 'REJECTED'])
 
     elif role == 'COMPENSATION_HQ_SO':
-        qs = qs.filter(
-            status__in=[
-                'CO_APPROVED',
-                'SO_REVIEWED',
-                'RETURNED',
-                'REJECTED',
-            ]
-        )
+        qs = qs.filter(status__in=['CO_APPROVED', 'SO_REVIEWED', 'RETURNED', 'REJECTED'])
 
     elif role == 'COMPENSATION_HQ_CHIEF':
-        qs = qs.filter(
-            status__in=[
-                'SO_REVIEWED',
-                'PENDING_CP_HRM',
-                'RETURNED',
-                'REJECTED',
-            ]
-        )
+        qs = qs.filter(status__in=['SO_REVIEWED', 'PENDING_CP_HRM', 'RETURNED', 'REJECTED'])
 
     elif role == 'COMMITTEE_MEMBER':
         assigned_ids = (
@@ -303,18 +280,13 @@ def list_cases(request):
         qs = qs.filter(pk__in=assigned_ids)
 
     if request.query_params.get('case_type'):
-        qs = qs.filter(
-            incident_type=request.query_params.get('case_type')
-        )
+        qs = qs.filter(incident_type=request.query_params.get('case_type'))
 
     if request.query_params.get('status'):
-        qs = qs.filter(
-            status=request.query_params.get('status')
-        )
+        qs = qs.filter(status=request.query_params.get('status'))
 
-    return Response(
-        CaseListSerializer(qs, many=True).data
-    )
+    return Response(CaseListSerializer(qs, many=True).data)
+
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAnyStaff])
@@ -322,17 +294,20 @@ def get_case(request, case_id):
     try:
         case = CompensationCase.objects.get(case_id=case_id)
     except CompensationCase.DoesNotExist:
-        return Response(
-            {'error': 'Case not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
+
     user = request.user
     role = str(user.role or '')
 
     if role in ('RPC', 'UNIT_COMMANDER'):
-        if case.submitted_by != user:
+        user_region = user.station or ''
+        if user_region and case.region == user_region:
+            pass  # inaruhusiwa — mkoa unafanana
+        elif case.submitted_by == user:
+            pass  # inaruhusiwa — ni kesi yake mwenyewe
+        else:
             return Response(
-                {'error': 'Access denied.'},
+                {'error': 'Access denied. This case belongs to a different region.'},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -343,7 +318,6 @@ def get_case(request, case_id):
                 status=status.HTTP_403_FORBIDDEN
             )
 
-    # HQ ndiye wa kwanza kuanza review
     if case.status == 'SUBMITTED' and role == 'COMPENSATION_HQ':
         try:
             transition_status(
@@ -351,22 +325,14 @@ def get_case(request, case_id):
                 'UNDER_REVIEW',
                 user,
                 ip=get_client_ip(request),
-                meta={
-                    'triggered_by': 'hq_case_opened'
-                }
+                meta={'triggered_by': 'hq_case_opened'}
             )
-
             case.refresh_from_db()
-
         except ValueError:
             pass
+
     print(case)
-    return Response(
-        CaseDetailSerializer(
-            case,
-            context={'request': request}
-        ).data
-    )
+    return Response(CaseDetailSerializer(case, context={'request': request}).data)
 
 
 # ── Phase 2: HQ document verification ────────────────────────────────────────
@@ -386,18 +352,95 @@ def verify_document(request, case_id):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    doc_id = request.data.get('document_id')
-    is_ver = request.data.get('is_verified', False)
+    doc_id           = request.data.get('document_id')
+    is_ver           = request.data.get('is_verified', False)
+    # ── MPYA: rejected fields ─────────────────────────────────────────────
+    is_rejected      = request.data.get('is_rejected', False)
+    rejection_reason = request.data.get('rejection_reason', '').strip()
+    # ─────────────────────────────────────────────────────────────────────
 
     try:
         doc = CaseDocument.objects.get(id=doc_id, case=case)
     except CaseDocument.DoesNotExist:
         return Response({'error': 'Document not found.'}, status=status.HTTP_404_NOT_FOUND)
 
+    # ── MPYA: haiwezekani kuwa verified na rejected wakati mmoja ──────────
+    if is_ver and is_rejected:
+        return Response(
+            {'error': 'Document cannot be both verified and rejected simultaneously.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if is_rejected and not rejection_reason:
+        return Response(
+            {'error': 'rejection_reason is required when rejecting a document.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    # ─────────────────────────────────────────────────────────────────────
+
+    now = timezone.now()
+
     doc.is_verified = bool(is_ver)
     doc.verified_by = request.user
-    doc.verified_at = timezone.now()
-    doc.save(update_fields=['is_verified', 'verified_by', 'verified_at'])
+    doc.verified_at = now
+
+    # ── MPYA: weka au futa rejected state ────────────────────────────────
+    doc.is_rejected      = bool(is_rejected)
+    doc.rejection_reason = rejection_reason if is_rejected else ''
+    doc.rejected_by      = request.user if is_rejected else None
+    doc.rejected_at      = now if is_rejected else None
+    # ─────────────────────────────────────────────────────────────────────
+
+    doc.save(update_fields=[
+        'is_verified', 'verified_by', 'verified_at',
+        'is_rejected', 'rejection_reason', 'rejected_by', 'rejected_at',
+    ])
+
+    from .serializers import CaseDocumentSerializer
+    return Response(CaseDocumentSerializer(doc, context={'request': request}).data)
+
+
+# ── MPYA: Endpoint dedicated ya ku-reject document moja ──────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated, IsCompensationHQ])
+def reject_document(request, case_id, doc_id):
+    """Reject document moja moja bila kufanya HQ review yote."""
+    try:
+        case = CompensationCase.objects.get(case_id=case_id)
+    except CompensationCase.DoesNotExist:
+        return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    if case.status not in ('SUBMITTED', 'UNDER_REVIEW'):
+        return Response(
+            {'error': f'Cannot reject documents at this stage. Current: {case.status}.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        doc = CaseDocument.objects.get(id=doc_id, case=case)
+    except CaseDocument.DoesNotExist:
+        return Response({'error': 'Document not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    reason = request.data.get('rejection_reason', '').strip()
+    if not reason:
+        return Response(
+            {'error': 'rejection_reason is required.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    now = timezone.now()
+    doc.is_rejected      = True
+    doc.rejection_reason = reason
+    doc.rejected_by      = request.user
+    doc.rejected_at      = now
+    doc.is_verified      = False  # futa verification iliyopita kama ipo
+    doc.verified_by      = None
+    doc.verified_at      = None
+    doc.save(update_fields=[
+        'is_rejected', 'rejection_reason', 'rejected_by', 'rejected_at',
+        'is_verified', 'verified_by', 'verified_at',
+    ])
 
     from .serializers import CaseDocumentSerializer
     return Response(CaseDocumentSerializer(doc, context={'request': request}).data)
@@ -405,29 +448,17 @@ def verify_document(request, case_id):
 
 # ── Phase 2: HQ review chain ──────────────────────────────────────────────────
 
-
-
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsCompensationHQ])
 def hq_review_case(request, case_id):
     try:
         case = CompensationCase.objects.get(case_id=case_id)
     except CompensationCase.DoesNotExist:
-        return Response(
-            {'error': 'Case not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     if case.status not in ('SUBMITTED', 'UNDER_REVIEW'):
         return Response(
-            {
-                'error': (
-                    f'HQ can only review SUBMITTED/UNDER_REVIEW cases. '
-                    f'Current: {case.status}.'
-                )
-            },
+            {'error': f'HQ can only review SUBMITTED/UNDER_REVIEW cases. Current: {case.status}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -440,90 +471,72 @@ def hq_review_case(request, case_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    ip = get_client_ip(request)
+    ip  = get_client_ip(request)
     now = timezone.now()
 
     if decision == 'APPROVED':
-
-        unverified = case.documents.filter(
-            is_verified=False
-        ).count()
-
+        unverified = case.documents.filter(is_verified=False).count()
         if unverified > 0:
             return Response(
-                {
-                    'error': (
-                        f'{unverified} document(s) are still unverified. '
-                        f'Verify all documents before approving.'
-                    )
-                },
+                {'error': f'{unverified} document(s) are still unverified. Verify all documents before approving.'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-
         hq_users = _hq_users_only()
         co_users = _co_users()
-
         if hq_users:
             new_status = 'HQ_APPROVED'
             recipients = hq_users
-            message = 'Case approved by HQ and forwarded to HQ staff.'
+            message    = 'Case approved by HQ and forwarded to HQ staff.'
         elif co_users:
             new_status = 'CO_APPROVED'
             recipients = co_users
-            message = 'Case approved by HQ and forwarded to CO.'
+            message    = 'Case approved by HQ and forwarded to CO.'
 
     elif decision == 'RETURNED':
+        # ── MPYA: mark rejected documents ────────────────────────────────
+        rejected_doc_ids = request.data.get('rejected_documents', [])
+        rejection_reason = comments  # tumia notes kama sababu ya rejection
+
+        if rejected_doc_ids:
+            docs_to_reject = case.documents.filter(id__in=rejected_doc_ids)
+            docs_to_reject.update(
+                is_rejected      = True,
+                rejection_reason = rejection_reason,
+                rejected_by      = request.user,
+                rejected_at      = now,
+                is_verified      = False,  # futa verification iliyopita
+            )
+        # ─────────────────────────────────────────────────────────────────
 
         new_status = 'RETURNED'
         recipients = [case.submitted_by]
-        message = 'Case returned to RPC by HQ.'
+        message    = 'Case returned to RPC by HQ.'
 
     else:
-
         new_status = 'REJECTED'
         recipients = [case.submitted_by]
-        message = 'Case rejected by HQ.'
+        message    = 'Case rejected by HQ.'
 
     case.hq_reviewed_by = request.user
     case.hq_reviewed_at = now
-    case.hq_comments = comments
-    case.status = new_status
-
-    case.save(
-        update_fields=[
-            'status',
-            'hq_reviewed_by',
-            'hq_reviewed_at',
-            'hq_comments',
-            'updated_at',
-        ]
-    )
+    case.hq_comments    = comments
+    case.status         = new_status
+    case.save(update_fields=['status', 'hq_reviewed_by', 'hq_reviewed_at', 'hq_comments', 'updated_at'])
 
     AuditLog.objects.create(
-        case=case,
-        actor=request.user,
-        action='HQ_REVIEW',
-        from_status='UNDER_REVIEW',
-        to_status=new_status,
+        case=case, actor=request.user, action='HQ_REVIEW',
+        from_status='UNDER_REVIEW', to_status=new_status,
         metadata={
-            'decision': decision,
-            'comments': comments,
+            'decision':           decision,
+            'comments':           comments,
+            'rejected_documents': request.data.get('rejected_documents', []),  # MPYA
         },
         ip_address=ip,
     )
 
-    send_notification(
-        case,
-        f'HQ_{decision}',
-        recipients
-    )
+    send_notification(case, f'HQ_{decision}', recipients)
 
-    return Response({
-        'case_id': case.case_id,
-        'status': case.status,
-        'message': message,
-    })
-
+    return Response({'case_id': case.case_id, 'status': case.status, 'message': message})
 
 
 @api_view(['POST'])
@@ -532,19 +545,11 @@ def co_review_case(request, case_id):
     try:
         case = CompensationCase.objects.get(case_id=case_id)
     except CompensationCase.DoesNotExist:
-        return Response(
-            {'error': 'Case not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     if case.status != 'HQ_APPROVED':
         return Response(
-            {
-                'error': (
-                    f'CO can only review HQ_APPROVED cases. '
-                    f'Current: {case.status}.'
-                )
-            },
+            {'error': f'CO can only review HQ_APPROVED cases. Current: {case.status}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -557,63 +562,39 @@ def co_review_case(request, case_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    ip = get_client_ip(request)
+    ip  = get_client_ip(request)
     now = timezone.now()
 
     if decision == 'APPROVED':
         new_status = 'CO_APPROVED'
         recipients = _so_users()
-        message = 'Case approved by CO and forwarded to SO.'
-
+        message    = 'Case approved by CO and forwarded to SO.'
     elif decision == 'RETURNED':
         new_status = 'RETURNED'
         recipients = [case.submitted_by]
-        message = 'Case returned to RPC by CO.'
-
+        message    = 'Case returned to RPC by CO.'
     else:
         new_status = 'REJECTED'
         recipients = [case.submitted_by]
-        message = 'Case rejected by CO.'
+        message    = 'Case rejected by CO.'
 
     case.co_reviewed_by = request.user
     case.co_reviewed_at = now
-    case.co_comments = comments
-    case.status = new_status
-
-    case.save(
-        update_fields=[
-            'status',
-            'co_reviewed_by',
-            'co_reviewed_at',
-            'co_comments',
-            'updated_at',
-        ]
-    )
+    case.co_comments    = comments
+    case.status         = new_status
+    case.save(update_fields=['status', 'co_reviewed_by', 'co_reviewed_at', 'co_comments', 'updated_at'])
 
     AuditLog.objects.create(
-        case=case,
-        actor=request.user,
-        action='CO_REVIEW',
-        from_status='HQ_APPROVED',
-        to_status=new_status,
-        metadata={
-            'decision': decision,
-            'comments': comments,
-        },
+        case=case, actor=request.user, action='CO_REVIEW',
+        from_status='HQ_APPROVED', to_status=new_status,
+        metadata={'decision': decision, 'comments': comments},
         ip_address=ip,
     )
 
-    send_notification(
-        case,
-        f'CO_{decision}',
-        recipients
-    )
+    send_notification(case, f'CO_{decision}', recipients)
 
-    return Response({
-        'case_id': case.case_id,
-        'status': case.status,
-        'message': message,
-    })
+    return Response({'case_id': case.case_id, 'status': case.status, 'message': message})
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsCompensationSO])
@@ -621,16 +602,11 @@ def so_review_case(request, case_id):
     try:
         case = CompensationCase.objects.get(case_id=case_id)
     except CompensationCase.DoesNotExist:
-        return Response(
-            {'error': 'Case not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     if case.status != 'CO_APPROVED':
         return Response(
-            {
-                'error': f'SO can only review CO_APPROVED cases. Current: {case.status}.'
-            },
+            {'error': f'SO can only review CO_APPROVED cases. Current: {case.status}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -643,57 +619,39 @@ def so_review_case(request, case_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    ip = get_client_ip(request)
+    ip  = get_client_ip(request)
     now = timezone.now()
 
     if decision == 'APPROVED':
         new_status = 'SO_REVIEWED'
         recipients = _chief_users()
-        message = 'Case approved by SO and forwarded to Chief.'
-
+        message    = 'Case approved by SO and forwarded to Chief.'
     elif decision == 'RETURNED':
         new_status = 'RETURNED'
         recipients = [case.submitted_by]
-        message = 'Case returned to RPC by SO.'
-
+        message    = 'Case returned to RPC by SO.'
     else:
         new_status = 'REJECTED'
         recipients = [case.submitted_by]
-        message = 'Case rejected by SO.'
+        message    = 'Case rejected by SO.'
 
     case.so_reviewed_by = request.user
     case.so_reviewed_at = now
-    case.so_comments = comments
-    case.status = new_status
-
-    case.save(update_fields=[
-        'status',
-        'so_reviewed_by',
-        'so_reviewed_at',
-        'so_comments',
-        'updated_at',
-    ])
+    case.so_comments    = comments
+    case.status         = new_status
+    case.save(update_fields=['status', 'so_reviewed_by', 'so_reviewed_at', 'so_comments', 'updated_at'])
 
     AuditLog.objects.create(
-        case=case,
-        actor=request.user,
-        action='SO_REVIEW',
-        from_status='CO_APPROVED',
-        to_status=new_status,
-        metadata={
-            'decision': decision,
-            'comments': comments,
-        },
+        case=case, actor=request.user, action='SO_REVIEW',
+        from_status='CO_APPROVED', to_status=new_status,
+        metadata={'decision': decision, 'comments': comments},
         ip_address=ip,
     )
 
     send_notification(case, f'SO_{decision}', recipients)
 
-    return Response({
-        'case_id': case.case_id,
-        'status': case.status,
-        'message': message,
-    })
+    return Response({'case_id': case.case_id, 'status': case.status, 'message': message})
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsCompensationChief])
@@ -701,19 +659,11 @@ def chief_review_case(request, case_id):
     try:
         case = CompensationCase.objects.get(case_id=case_id)
     except CompensationCase.DoesNotExist:
-        return Response(
-            {'error': 'Case not found.'},
-            status=status.HTTP_404_NOT_FOUND
-        )
+        return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
 
     if case.status != 'SO_REVIEWED':
         return Response(
-            {
-                'error': (
-                    f'Chief can only review SO_REVIEWED cases. '
-                    f'Current: {case.status}.'
-                )
-            },
+            {'error': f'Chief can only review SO_REVIEWED cases. Current: {case.status}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -726,63 +676,41 @@ def chief_review_case(request, case_id):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-    ip = get_client_ip(request)
+    ip  = get_client_ip(request)
     now = timezone.now()
 
     if decision == 'APPROVED':
         new_status = 'PENDING_CP_HRM'
         recipients = _igp_users()
-        message = 'Case approved by Chief and forwarded to CP_HRM.'
-
+        message    = 'Case approved by Chief and forwarded to CP_HRM.'
     elif decision == 'RETURNED':
         new_status = 'RETURNED'
         recipients = [case.submitted_by]
-        message = 'Case returned to RPC by Chief.'
-
+        message    = 'Case returned to RPC by Chief.'
     else:
         new_status = 'REJECTED'
         recipients = [case.submitted_by]
-        message = 'Case rejected by Chief.'
+        message    = 'Case rejected by Chief.'
 
     case.chief_reviewed_by = request.user
     case.chief_reviewed_at = now
-    case.chief_comments = comments
-    case.status = new_status
-
-    case.save(update_fields=[
-        'status',
-        'chief_reviewed_by',
-        'chief_reviewed_at',
-        'chief_comments',
-        'updated_at',
-    ])
+    case.chief_comments    = comments
+    case.status            = new_status
+    case.save(update_fields=['status', 'chief_reviewed_by', 'chief_reviewed_at', 'chief_comments', 'updated_at'])
 
     AuditLog.objects.create(
-        case=case,
-        actor=request.user,
-        action='CHIEF_REVIEW',
-        from_status='SO_REVIEWED',
-        to_status=new_status,
-        metadata={
-            'decision': decision,
-            'comments': comments,
-        },
+        case=case, actor=request.user, action='CHIEF_REVIEW',
+        from_status='SO_REVIEWED', to_status=new_status,
+        metadata={'decision': decision, 'comments': comments},
         ip_address=ip,
     )
 
-    send_notification(
-        case,
-        f'CHIEF_{decision}',
-        recipients
-    )
+    send_notification(case, f'CHIEF_{decision}', recipients)
 
-    return Response({
-        'case_id': case.case_id,
-        'status': case.status,
-        'message': message,
-    })
+    return Response({'case_id': case.case_id, 'status': case.status, 'message': message})
 
-# ── Phase 3: CP_HRM forms committee ─────────────────────────────────────────────
+
+# ── Phase 3: CP_HRM forms committee ──────────────────────────────────────────
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsCP_HRM])
@@ -904,7 +832,7 @@ def form_committee(request, case_id):
                 from_status = 'PENDING_CP_HRM',
                 to_status   = 'COMMITTEE_ASSIGNED',
                 metadata    = {
-                    'approved_by':  request.user.id,
+                    'approved_by': request.user.id,
                     'members': [
                         {
                             'identifier': m.get('user_id') or m.get('force_number') or m.get('email'),
@@ -912,8 +840,8 @@ def form_committee(request, case_id):
                         }
                         for m in members_data
                     ],
-                    'meeting_date':            data['meeting_date'].isoformat(),
-                    'digital_signature_hash':  sig,
+                    'meeting_date':           data['meeting_date'].isoformat(),
+                    'digital_signature_hash': sig,
                 },
                 ip_address = ip,
             )
@@ -962,27 +890,22 @@ def submit_input(request, case_id):
         return Response({'error': 'You have already submitted your input.'},
                         status=status.HTTP_400_BAD_REQUEST)
 
-    # ── RPC RULE: lazima awe wa mwisho kuwasilisha ──────────────────────────
     agreed_amount = None
     if member.role == 'RPC':
         other_members = case.committee_members.exclude(user=request.user)
-        pending = other_members.filter(assessment_input__isnull=True)
+        pending       = other_members.filter(assessment_input__isnull=True)
         if pending.exists():
             pending_names = list(pending.values_list('user__first_name', flat=True))
             return Response(
                 {
                     'error':           'RPC_BLOCKED',
-                    'detail':          (
-                        f'Kama RPC, lazima uwasilishe mwisho. '
-                        f'Wanachama {pending.count()} bado hawajawasilisha.'
-                    ),
+                    'detail':          f'Kama RPC, lazima uwasilishe mwisho. Wanachama {pending.count()} bado hawajawasilisha.',
                     'pending_count':   pending.count(),
                     'pending_members': pending_names,
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        # ── RPC lazima atoe agreed_amount ───────────────────────────────────
         raw_amount = request.data.get('agreed_amount')
         if raw_amount is None or raw_amount == '':
             return Response(
@@ -998,7 +921,6 @@ def submit_input(request, case_id):
                 {'error': 'agreed_amount lazima iwe nambari sahihi (e.g. 650000).'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-    # ───────────────────────────────────────────────────────────────────────
 
     s = MemberInputSerializer(data=request.data)
     if not s.is_valid():
@@ -1039,9 +961,8 @@ def submit_input(request, case_id):
         return _finalize(case, request.user, ip)
 
     return Response(
-        {'message':   f'Input saved. {total - done} member(s) still pending.',
-         'submitted': done,
-         'total':     total},
+        {'message': f'Input saved. {total - done} member(s) still pending.',
+         'submitted': done, 'total': total},
         status=status.HTTP_201_CREATED,
     )
 
@@ -1112,14 +1033,11 @@ def get_assessment(request, case_id):
 @permission_classes([IsAuthenticated, IsCompensationHQ])
 def send_reminders(request):
     cutoff = date.today() - timedelta(days=3)
-    cases  = CompensationCase.objects.filter(
-        status='COMMITTEE_ASSIGNED', meeting_date__lte=cutoff,
-    )
-    count = 0
+    cases  = CompensationCase.objects.filter(status='COMMITTEE_ASSIGNED', meeting_date__lte=cutoff)
+    count  = 0
     for case in cases:
         submitted     = set(case.member_inputs.values_list('committee_member__user_id', flat=True))
-        pending       = list(case.committee_members.exclude(user_id__in=submitted)
-                             .values_list('user', flat=True))
+        pending       = list(case.committee_members.exclude(user_id__in=submitted).values_list('user', flat=True))
         pending_users = list(User.objects.filter(pk__in=pending))
         if pending_users:
             send_notification(case, 'ASSESSMENT_REMINDER', pending_users)

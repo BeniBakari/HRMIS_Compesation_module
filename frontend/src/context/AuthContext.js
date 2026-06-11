@@ -5,8 +5,9 @@ const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser]                             = useState(null);
+  const [loading, setLoading]                       = useState(true);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
 
   const setAxiosToken = (token) => {
     if (token) {
@@ -23,6 +24,9 @@ export function AuthProvider({ children }) {
     try {
       const res = await axios.get(`${API}/api/auth/profile/`);
       setUser(res.data);
+      if (res.data.must_change_password) {
+        setMustChangePassword(true);
+      }
     } catch {
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
@@ -36,11 +40,14 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const res = await axios.post(`${API}/api/auth/login/`, { email, password });
-    const { access, refresh, user: userData } = res.data;
+    const { access, refresh, user: userData, must_change_password } = res.data;
     localStorage.setItem('access_token', access);
     localStorage.setItem('refresh_token', refresh);
     setAxiosToken(access);
     setUser(userData);
+    if (must_change_password || userData?.must_change_password) {
+      setMustChangePassword(true);
+    }
     return userData;
   };
 
@@ -53,6 +60,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('refresh_token');
     setAxiosToken(null);
     setUser(null);
+    setMustChangePassword(false);
   };
 
   const refreshToken = async () => {
@@ -64,8 +72,16 @@ export function AuthProvider({ children }) {
     return res.data.access;
   };
 
+  const clearMustChangePassword = () => {
+  setMustChangePassword(false);
+  setUser(prev => prev ? { ...prev, must_change_password: false } : prev);
+  fetchProfile();
+};
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshToken, fetchProfile }}>
+    <AuthContext.Provider value={{
+      user, loading, login, logout, refreshToken, fetchProfile,
+      mustChangePassword, clearMustChangePassword,
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,7 +4,13 @@ import { useAuth } from '../../context/AuthContext';
 import { 
   ClipboardList, Users, Edit3, CheckCircle2, Clock, 
   AlertTriangle, Activity, UserPlus, Info, Check, 
+<<<<<<< HEAD
   ChevronRight, Loader2, TrendingUp, MessageSquare,  DollarSign} from 'lucide-react';import "../../pages/CaseDetail.css";
+=======
+  ChevronRight, Loader2, TrendingUp, MessageSquare,
+  DollarSign
+} from 'lucide-react';
+>>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 
 const SEVERITY_OPTIONS = [
   { value: 'MINOR',    label: 'Minor',    pct: 25,  color: '#22c55e', bg: '#f0fdf4' },

@@ -17,10 +17,9 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active', 'date_joined',
             'check_number', 'nin',
             'profile_photo', 'signature',
+            'must_change_password',  # ✅ Frontend needs this to redirect to change-password page
         ]
-        read_only_fields = ['id', 'date_joined']
-        # profile_photo and signature can be large; exclude them from list
-        # responses by using UserListSerializer instead (see below).
+        read_only_fields = ['id', 'date_joined', 'must_change_password']
 
     def get_full_name(self, obj):
         return obj.get_full_name()
@@ -28,36 +27,25 @@ class UserSerializer(serializers.ModelSerializer):
     def get_initials(self, obj):
         return obj.get_initials()
 
-    # ── Write: strip data-URI prefix if client sends a full URI ──────────────
-
     def validate_profile_photo(self, value: str) -> str:
-        """Accept either raw base64 or a data-URI; always store raw base64."""
         if value and value.startswith('data:'):
             try:
                 value = value.split(',', 1)[1]
             except IndexError:
-                raise serializers.ValidationError(
-                    'Invalid data-URI format for profile_photo.'
-                )
+                raise serializers.ValidationError('Invalid data-URI format for profile_photo.')
         return value
 
     def validate_signature(self, value: str) -> str:
-        """Accept either raw base64 or a data-URI; always store raw base64."""
         if value and value.startswith('data:'):
             try:
                 value = value.split(',', 1)[1]
             except IndexError:
-                raise serializers.ValidationError(
-                    'Invalid data-URI format for signature.'
-                )
+                raise serializers.ValidationError('Invalid data-URI format for signature.')
         return value
 
 
 class UserListSerializer(serializers.ModelSerializer):
-    """
-    Lightweight serializer for list endpoints.
-    Omits profile_photo and signature to keep responses small.
-    """
+    """Lightweight serializer for list endpoints — omits photos."""
     full_name = serializers.SerializerMethodField()
     initials  = serializers.SerializerMethodField()
 
@@ -69,6 +57,7 @@ class UserListSerializer(serializers.ModelSerializer):
             'full_name', 'initials',
             'rank', 'role', 'unit', 'station', 'phone',
             'is_active', 'date_joined',
+            'must_change_password',  # ✅ included so admin can see who needs to change
         ]
         read_only_fields = ['id', 'date_joined']
 
@@ -86,7 +75,6 @@ class LoginSerializer(serializers.Serializer):
     def validate(self, data):
         user = authenticate(username=data['email'], password=data['password'])
         if not user:
-            # Single message — don't reveal whether email or password is wrong.
             raise serializers.ValidationError('Invalid credentials.')
         if not user.is_active:
             raise serializers.ValidationError('This account has been deactivated.')
@@ -106,7 +94,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'rank', 'role', 'unit', 'station', 'phone',
             'check_number', 'nin',
             'password', 'confirm_password',
-            'profile_photo', 'signature'
+            'profile_photo', 'signature',
         ]
 
     def validate(self, data):
@@ -121,12 +109,14 @@ class UserCreateSerializer(serializers.ModelSerializer):
         password = validated_data.pop('password')
         user = User(**validated_data)
         user.set_password(password)
+        # ✅ Every new user MUST change their password on first login
+        user.must_change_password = True
         user.save()
         return user
 
 
 class ChangePasswordSerializer(serializers.Serializer):
-    """Authenticated password change (requires current password)."""
+    """Authenticated password change — requires current password."""
     current_password = serializers.CharField(write_only=True)
     new_password     = serializers.CharField(write_only=True, min_length=8)
     confirm_password = serializers.CharField(write_only=True, min_length=8)
@@ -147,5 +137,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     def save(self):
         user = self.context['request'].user
         user.set_password(self.validated_data['new_password'])
-        user.save(update_fields=['password'])
+        # ✅ Clear the force-change flag after successful change
+        user.must_change_password = False
+        user.save(update_fields=['password', 'must_change_password'])
         return user
