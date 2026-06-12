@@ -99,22 +99,14 @@ class CommitteeMemberSerializer(serializers.ModelSerializer):
     force_number        = serializers.SerializerMethodField()
     rank                = serializers.SerializerMethodField()
     region              = serializers.SerializerMethodField()
-<<<<<<< HEAD
-    signature              = serializers.SerializerMethodField()
-=======
     signature           = serializers.SerializerMethodField()
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 
     class Meta:
         model  = CommitteeMember
         fields = [
             'id', 'user_id', 'user_display', 'role', 'assigned_at',
             'appointment_letter_path', 'has_submitted_input',
-<<<<<<< HEAD
-            'force_number', 'rank', 'region', 'signature'
-=======
             'force_number', 'rank', 'region', 'signature',
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
         ]
         read_only_fields = ['id', 'assigned_at']
 
@@ -136,12 +128,8 @@ class CommitteeMemberSerializer(serializers.ModelSerializer):
     def get_signature(self, obj):
         if not obj.user:
             return None
-<<<<<<< HEAD
-        return obj.user.signature  # This will return a data URI or empty string
-=======
         return obj.user.signature
 
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
     def get_region(self, obj):
         if not obj.user:
             return None
@@ -162,11 +150,7 @@ class CommitteeMemberInputSerializer(serializers.Serializer):
 class CommitteeFormationSerializer(serializers.Serializer):
     meeting_date      = serializers.DateField()
     digital_signature = serializers.CharField(
-<<<<<<< HEAD
-         required=False, allow_blank=True, default=''
-=======
         required=False, allow_blank=True, default=''
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
     )
     members = CommitteeMemberInputSerializer(many=True, min_length=4, max_length=4)
 
@@ -316,7 +300,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'case_id', 'incident_type', 'incident_type_label', 'status', 'status_label',
             'soldier_id', 'soldier_force_number', 'soldier_full_name',
             'soldier_rank', 'soldier_district',
-            'incident_date', 'incident_time', 'incident_location',
+            'incident_date','region',  'incident_time', 'incident_location',
             'nature_of_incident', 'duty_context',
             'submitted_by_display', 'submitted_at',
             'review_comments', 'reviewed_at',

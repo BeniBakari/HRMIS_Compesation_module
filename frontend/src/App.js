@@ -8,11 +8,7 @@ import ChangePasswordModal from './components/ChangePasswordModal';
 const LoginPage          = React.lazy(() => import('./pages/Login'));
 const DashboardPage      = React.lazy(() => import('./pages/Dashboard'));
 const CaseListPage       = React.lazy(() => import('./pages/CaseList'));
-<<<<<<< HEAD
 const CaseDetailPage     = React.lazy(() => import('./pages/CaseDetail'));
-=======
-const CaseDetailPage     = React.lazy(() => import('./components/cases/CaseDetail'));
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 const CaseSubmissionPage = React.lazy(() => import('./pages/CaseSubmission'));
 const AssignedCasesPage  = React.lazy(() => import('./pages/AssignedCases'));
 const ReportsPage        = React.lazy(() => import('./pages/Reports'));

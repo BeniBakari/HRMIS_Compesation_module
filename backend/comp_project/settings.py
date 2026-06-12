@@ -41,13 +41,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-<<<<<<< HEAD
-    
-=======
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
     'accounts.middleware.default_password.DefaultPasswordMiddleware',
 ]
-
 X_FRAME_OPTIONS = 'ALLOWALL'
 
 ROOT_URLCONF = 'comp_project.urls'
@@ -83,12 +78,8 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'compensation_db',     
         'USER': 'root',      
-<<<<<<< HEAD
-        'PASSWORD': '123', 
-=======
-        'PASSWORD': 'root', 
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
-        'HOST': 'localhost',          
+        'PASSWORD': '123',
+        'HOST':'localhost', 
         'PORT': '3306',             
     }
 }

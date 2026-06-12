@@ -6,19 +6,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.contrib.auth import update_session_auth_hash
 import requests
 
 from .models import User, ROLE_CHOICES
-<<<<<<< HEAD
-from .serializers import LoginSerializer, UserSerializer, UserCreateSerializer
-=======
 from .serializers import (
     LoginSerializer, UserSerializer, UserCreateSerializer, ChangePasswordSerializer
 )
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 from accounts.middleware.default_password import DefaultPasswordMiddleware
 
 
@@ -73,11 +66,7 @@ def update_profile(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def create_user(request):
-<<<<<<< HEAD
-    """ADMIN only — create a new system user."""
-=======
     """ADMIN or CP_HRM only — create a new system user."""
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
     if not (request.user.has_role('ADMIN') or request.user.has_role('CP_HRM')):
         return Response({'error': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -125,8 +114,6 @@ def lookup_user_by_force_number(request):
         return Response({'error': 'User not found.'}, status=404)
 
 
-<<<<<<< HEAD
-=======
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def change_password(request, user_id=None):
@@ -227,7 +214,6 @@ def update_role(request, user_id):
     })
 
 
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 HRMIS_TO_USER_MAP = {
     "email": "email",
     "force_number": "force_number",
@@ -256,16 +242,7 @@ def sync_user_with_hrmis(request, user_id):
 
         hrmis_data = fetch_hrmis_data(user.check_number)
         if not hrmis_data or "info" not in hrmis_data:
-<<<<<<< HEAD
-            return Response(
-                {"message": "No data found in HRMIS."},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        info = hrmis_data["info"]
-=======
             return Response({"message": "No data found in HRMIS."}, status=status.HTTP_404_NOT_FOUND)
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 
         info = hrmis_data["info"]
         for hrmis_field, user_field in HRMIS_TO_USER_MAP.items():
@@ -273,10 +250,6 @@ def sync_user_with_hrmis(request, user_id):
                 continue
             if hrmis_field in info and info[hrmis_field] is not None:
                 setattr(user, user_field, info[hrmis_field])
-<<<<<<< HEAD
-
-=======
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
         user.save()
 
         hq_users = list(User.objects.filter(role='COMPENSATION_HQ', is_active=True))
@@ -292,66 +265,11 @@ def sync_user_with_hrmis(request, user_id):
             new_status, recipients = 'NO_RECIPIENT', []
             message = f"User {user.get_full_name()} verified with HRMIS, but no HQ/CO recipients found."
 
-<<<<<<< HEAD
-        return Response(
-            {
-                "status": new_status,
-                "message": message,
-                "recipients": [u.email for u in recipients],
-                "data": {
-                    "user_id": user.id,
-                    "full_name": user.get_full_name(),
-                    "rank": user.rank,
-                    "force_number": user.force_number,
-                    "check_number": user.check_number,
-                    "email": user.email,
-                    "unit": user.unit,
-                    "station": user.station,
-                    "phone": user.phone,
-                    "nin": user.nin,
-                    # role intentionally excluded from sync
-                }
-            },
-            status=status.HTTP_200_OK
-        )
-
-    except User.DoesNotExist:
-        return Response(
-            {"message": "User not found."},
-            status=status.HTTP_404_NOT_FOUND
-        )
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def get_user(request, user_id):
-    """Get user details by ID."""
-    try:
-        user = User.objects.get(id=user_id)
-        return Response(UserSerializer(user).data)
-    except User.DoesNotExist:
-        return Response({'message': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def toggle_active(request, user_id):
-    """Toggle a user's active status (active → inactive, inactive → active)."""
-    try:
-        user = User.objects.get(id=user_id)
-        user.is_active = not user.is_active
-        user.save()
-
-        return Response(
-            {
-                "message": f"User {'activated' if user.is_active else 'deactivated'} successfully.",
-=======
         return Response({
             "status": new_status,
             "message": message,
             "recipients": [u.email for u in recipients],
             "data": {
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
                 "user_id": user.id,
                 "full_name": user.get_full_name(),
                 "rank": user.rank,
@@ -368,64 +286,6 @@ def toggle_active(request, user_id):
     except User.DoesNotExist:
         return Response({"message": "User not found."}, status=status.HTTP_404_NOT_FOUND)
 
-<<<<<<< HEAD
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def change_password(request, user_id=None):
-    """
-    Change password for current user or another user (if admin).
-    """
-    # Determine which user to update
-    if user_id is None or user_id == request.user.id:
-        user = request.user
-    else:
-        # Only allow admins or superusers to change others' passwords
-        if not request.user.is_staff and not request.user.is_superuser:
-            return Response(
-                {"detail": "You do not have permission to change other users' passwords."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-        user = get_object_or_404(User, id=user_id)
-
-    current_password = request.data.get('current_password')
-    new_password = request.data.get('new_password')
-
-    if not current_password or not new_password:
-        return Response(
-            {"detail": "Current password and new password are required."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    if not user.check_password(current_password):
-        return Response(
-            {"detail": "Current password is incorrect."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    if len(new_password) < 8:
-        return Response(
-            {"detail": "New password must be at least 8 characters long."},
-            status=status.HTTP_400_BAD_REQUEST
-        )
-
-    user.set_password(new_password)
-    user.save()
-
-    # Clear the default password flag
-    DefaultPasswordMiddleware.clear_flag(request)
-
-    # Keep the user logged in
-    update_session_auth_hash(request, user)
-
-    return Response({
-        "status": "success",
-        "message": "Nenosiri limebadilishwa kwa mafanikio!",
-        "detail": "Password changed successfully."
-    })
-
-=======
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
 
 def fetch_hrmis_data(check_number):
     response = requests.post(
@@ -437,55 +297,4 @@ def fetch_hrmis_data(check_number):
         },
         json={"checkno": check_number},
     )
-<<<<<<< HEAD
     return response.json()
-
-
-@api_view(['POST'])
-@permission_classes([IsAuthenticated])
-def update_role(request, user_id):
-    """Update a user's role (ADMIN only)."""
-    if not request.user.has_role('ADMIN'):
-        return Response({'message': 'Admin access required.'}, status=status.HTTP_403_FORBIDDEN)
-
-    try:
-        user = User.objects.get(id=user_id)
-    except User.DoesNotExist:
-        return Response({'message': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
-
-    new_role = request.data.get('role')
-    if isinstance(new_role, dict):
-        new_role = new_role.get('role')  # unwrap nested dict
-
-    if not new_role:
-        return Response({'message': 'Role is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    valid_roles = {
-        "ADMIN",
-        "RPC",
-        "COMPENSATION_HQ",
-        "COMPENSATION_HQ_CO",
-        "COMPENSATION_HQ_SO",
-        "COMPENSATION_HQ_CHIEF",
-        "CP_HRM",
-        "CP_ADMINISTRATION",
-        "COMMITTEE_MEMBER",
-    }
-
-    if new_role not in valid_roles:
-        return Response({'message': 'Invalid role specified.'}, status=status.HTTP_400_BAD_REQUEST)
-
-    user.role = new_role
-    user.save()
-
-    return Response(
-        {
-            "message": f"User role updated to {new_role}.",
-            "user_id": user.id,
-            "new_role": user.role,
-        },
-        status=status.HTTP_200_OK
-    )
-=======
-    return response.json()
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654

@@ -29,18 +29,25 @@ const MEMBER_ROLES = [
         hrmis.info.rank ||
         ""
       ).toUpperCase();
+      const hrmisRegion = (        // ← define it HERE inside the function
+       hrmis.info.commands ||
+       hrmis.info.stations ||
+      ""
+    ).toUpperCase().trim();
       const region = (
         hrmis.info.commands ||
         hrmis.info.stations ||
         ""
       ).toUpperCase();
+      
       const isRPC =
         designation.includes("RPC") ||
         designation.includes("REGIONAL POLICE COMMANDER");
-      const inRegion = !caseRegion || region.includes(caseRegion.toUpperCase());
-      if (!isRPC) return "This officer is not designated as RPC in HRMIS.";
+      const inRegion = !caseRegion || region.includes(caseRegion.trim().toUpperCase()) || caseRegion.trim().toUpperCase().includes(region.trim().toUpperCase());
+
       if (!inRegion)
-        return `This RPC is not from the incident region (${caseRegion}).`;
+        return `This RPC is not from the case region (${caseRegion}). Officer's region: ${hrmisRegion || "unknown"}.`;
+   
       return null;
     },
   },

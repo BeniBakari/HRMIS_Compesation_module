@@ -149,11 +149,7 @@ def upload_document(request, case_id):
         s = DocumentUploadSerializer(data=request.data)
         if not s.is_valid():
             return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> 2519d1b2cc88ee889429e3f4575c41f2573ec654
         doc_type    = s.validated_data['doc_type']
         file_base64 = s.validated_data['file']
         filename    = s.validated_data.get('filename') or 'document'
