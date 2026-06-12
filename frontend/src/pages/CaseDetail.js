@@ -1459,7 +1459,7 @@ export default function CaseDetail() {
                     color: "#1c236d",
                   }}
                 >
-                  TSh {reportAgreedAmount.toLocaleString()}
+                  TSh {reportAgreedAmount?.toLocaleString()}
                 </div>
               </div>
             </div>
@@ -1965,7 +1965,7 @@ export default function CaseDetail() {
                       {data.audit.map((log) => (
                         <tr key={log.id}>
                           <td style={{ opacity: 0.7 }}>
-                            {new Date(log.created_at).toLocaleString()}
+                            {new Date(log.created_at)?.toLocaleString()}
                           </td>
                           <td style={{ fontWeight: 500 }}>
                             {log.user_display}

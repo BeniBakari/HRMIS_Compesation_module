@@ -393,7 +393,8 @@ export default function CommitteeFormation({
 
 // ─── Separated form component ─────────────────────────────────────────────────
 function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
-  const { user } = useAuth(); // ← user aliyelogin
+   console.log("✅ caseRegion prop:", caseRegion);
+  const { user } = useAuth(); // ← logged in user
 
   const [members, setMembers] = useState([{ ...EMPTY_MEMBER }]);
   const [meetingDate, setMeetingDate] = useState("");
@@ -402,6 +403,7 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
   const [error, setError] = useState("");
   const [signature, setSignature] = useState("");       // base64 string ya signature
   const [signatureLoading, setSignatureLoading] = useState(false);
+  const [hrmisRegionUpdate,setHrmisRegionUpdate]=useState("");
 
   // ─── Auto-fetch signature image from HRMIS on mount ─────────────────────
   useEffect(() => {
@@ -438,6 +440,8 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
 
   // ─── Lookup from HRMIS then validate against selected role ────────────────
   const handleHrmisLookup = async (idx, checkNumber) => {
+
+    
     const member = members[idx];
     if (!checkNumber.trim()) return;
 
@@ -470,7 +474,7 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
         const roleDef = MEMBER_ROLES.find((r) => r.value === member.role);
         validationError = roleDef?.validate(hrmis, caseRegion) ?? null;
       }
-
+      setHrmisRegionUpdate(hrmisRegion);
       updateMember(idx, {
         user_id,
         force_number,
@@ -732,9 +736,9 @@ function CommitteeFormationForm({ caseId, caseRegion, onComplete }) {
         </div>
         <span style={{ fontSize: "12px", color: "#64748b", fontWeight: 500 }}>
           {verifiedCount}/4 MEMBERS VERIFIED
-          {caseRegion && (
+          {hrmisRegionUpdate && (
             <span style={{ color: "#1c236d", marginLeft: "10px" }}>
-              · REGION: {caseRegion.toUpperCase()}
+              · REGION: {hrmisRegionUpdate.toUpperCase()}
             </span>
           )}
         </span>
