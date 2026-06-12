@@ -15,7 +15,7 @@ from .models import (
 )
 from .permissions import (
     IsRPC, IsCompensationHQ, IsCompensationCO,
-    IsCompensationSO, IsCompensationChief,
+     IsCompensationChief,
     IsCP_HRM, IsCommitteeMember, IsAnyStaff,
 )
 from .serializers import (
@@ -48,7 +48,7 @@ def _chief_users():
 
 def _hq_users():
     return list(User.objects.filter(
-        role__in=['COMPENSATION_HQ_CO', 'COMPENSATION_HQ_SO', 'COMPENSATION_HQ_CHIEF'],
+        role__in=['COMPENSATION_HQ_CO', 'COMPENSATION_HQ_CHIEF'],
         is_active=True,
     ))
 
@@ -562,8 +562,8 @@ def co_review_case(request, case_id):
 
     if decision == 'APPROVED':
         new_status = 'CO_APPROVED'
-        recipients = _so_users()
-        message    = 'Case approved by CO and forwarded to SO.'
+        recipients = _chief_users()
+        message    = 'Case approved by CO and forwarded to Chief.'
     elif decision == 'RETURNED':
         new_status = 'RETURNED'
         recipients = [case.submitted_by]
@@ -592,7 +592,7 @@ def co_review_case(request, case_id):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated, IsCompensationSO])
+@permission_classes([IsAuthenticated])
 def so_review_case(request, case_id):
     try:
         case = CompensationCase.objects.get(case_id=case_id)
@@ -656,9 +656,9 @@ def chief_review_case(request, case_id):
     except CompensationCase.DoesNotExist:
         return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-    if case.status != 'SO_REVIEWED':
+    if case.status != 'CO_REVIEWED':
         return Response(
-            {'error': f'Chief can only review SO_REVIEWED cases. Current: {case.status}.'},
+            {'error': f'Chief can only review CO_REVIEWED cases. Current: {case.status}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -695,7 +695,7 @@ def chief_review_case(request, case_id):
 
     AuditLog.objects.create(
         case=case, actor=request.user, action='CHIEF_REVIEW',
-        from_status='SO_REVIEWED', to_status=new_status,
+        from_status='CO_REVIEWED', to_status=new_status,
         metadata={'decision': decision, 'comments': comments},
         ip_address=ip,
     )

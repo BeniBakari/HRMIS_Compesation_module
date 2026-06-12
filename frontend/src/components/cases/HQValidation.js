@@ -145,14 +145,12 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
   // ── Role helpers ────────────────────────────────────────────────────────────
   const isHQ    = role === 'COMPENSATION_HQ';
   const isCO    = role === 'COMPENSATION_HQ_CO';
-  const isSO    = role === 'COMPENSATION_HQ_SO';
   const isChief = role === 'COMPENSATION_HQ_CHIEF';
 
   const canAct = () => {
     if (isHQ)    return ['SUBMITTED', 'UNDER_REVIEW'].includes(currentStatus);
     if (isCO)    return currentStatus === 'HQ_APPROVED';
-    if (isSO)    return currentStatus === 'CO_APPROVED';
-    if (isChief) return currentStatus === 'SO_REVIEWED';
+    if (isChief) return currentStatus === 'CO_REVIEWED';
     return false;
   };
 
@@ -166,7 +164,6 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
   const getDecisions = () => {
     if (isHQ)    return HQ_DECISIONS;
     if (isCO)    return CO_DECISIONS;
-    if (isSO)    return SO_DECISIONS;
     if (isChief) return CHIEF_DECISIONS;
     return [];
   };
@@ -174,20 +171,17 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
   const getRoleLabel = () => {
     if (isHQ)    return 'HQ — DOCUMENT VALIDATION';
     if (isCO)    return 'CO — CASE REVIEW';
-    if (isSO)    return 'SO — CASE REVIEW';
     if (isChief) return 'CHIEF — FINAL APPROVAL';
     return 'HQ REVIEW';
   };
 
   const getNextStep = () => {
     if (isHQ)    return 'CO Review';
-    if (isCO)    return 'SO Review';
-    if (isSO)    return 'Chief Approval';
+    if (isCO)    return 'Chief Approval';
     if (isChief) return 'CP_HRM Office';
     return '';
   };
 
-  // ── ✅ HAPA NDIPO MABADILIKO YALIPO: Button label inabadilika kulingana na chaguo ──
   const getSubmitLabel = () => {
     if (!decision) return 'SELECT A DECISION ABOVE';
 
@@ -197,7 +191,6 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
     // decision === 'APPROVED'
     if (isHQ)    return 'FORWARD TO CO OFFICE';
     if (isCO)    return 'COMMIT VALIDATION';
-    if (isSO)    return 'FORWARD TO CHIEF';
     if (isChief) return 'SUBMIT TO CP_HRM OFFICE';
 
     return 'SUBMIT';
@@ -252,8 +245,7 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
     const messages = {
       SUBMITTED:          'This case is waiting for HQ to validate documents.',
       UNDER_REVIEW:       'HQ is currently reviewing this case.',
-      CO_APPROVED:        isSO ? 'This case is ready for your review.' : 'This case is awaiting SO review.',
-      SO_REVIEWED:        isChief ? 'This case is ready for your final approval.' : 'This case is awaiting Chief approval.',
+      CO_APPROVED:        isChief ? 'This case is ready for your final approval.' : 'This case is awaiting Chief approval.',
       PENDING_CP_HRM:        'Case has been submitted to the CP_HRM Office.',
       COMMITTEE_ASSIGNED: 'Case is with the assessment committee.',
       RETURNED:           'Case has been returned to RPC for corrections.',
@@ -371,8 +363,8 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
         </div>
       )}
 
-      {/* ── SO & CHIEF: Read-only document list ───────────────────────────── */}
-      {(isSO || isChief) && (
+      {/ & CHIEF: Read-only document list ───────────────────────────── */}
+      {(isChief) && (
         <div className="info-section">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <FileText size={18} /> SUPPORTING DOCUMENTS
@@ -462,7 +454,7 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
             placeholder={
               isCO    ? 'State the outcome of document verification. Mention any discrepancies found...' :
               isHQ    ? 'Provide your validation findings and justification for this decision...' :
-              isSO    ? 'Provide your review findings and justification for this decision...' :
+              isChief ? 'Provide your review findings and justification for this decision...' :
                         'State your final determination and justification for submission to CP_HRM...'
             }
             value={notes}
