@@ -300,7 +300,7 @@ class CaseDetailSerializer(serializers.ModelSerializer):
             'case_id', 'incident_type', 'incident_type_label', 'status', 'status_label',
             'soldier_id', 'soldier_force_number', 'soldier_full_name',
             'soldier_rank', 'soldier_district',
-            'incident_date', 'incident_time', 'incident_location',
+            'incident_date','region',  'incident_time', 'incident_location',
             'nature_of_incident', 'duty_context',
             'submitted_by_display', 'submitted_at',
             'review_comments', 'reviewed_at',

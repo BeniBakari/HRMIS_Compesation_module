@@ -43,7 +43,6 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'accounts.middleware.default_password.DefaultPasswordMiddleware',
 ]
-
 X_FRAME_OPTIONS = 'ALLOWALL'
 
 ROOT_URLCONF = 'comp_project.urls'
@@ -79,9 +78,9 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'compensation',     
         'USER': 'root',      
-        'PASSWORD': '', 
-        'HOST': 'localhost',          
-        'PORT': '3306',               
+        'PASSWORD': '',
+        'HOST':'localhost', 
+        'PORT': '3306',             
     }
 }
 

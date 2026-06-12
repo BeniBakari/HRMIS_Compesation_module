@@ -261,11 +261,8 @@ def list_cases(request):
     elif role == 'COMPENSATION_HQ_CO':
         qs = qs.filter(status__in=['HQ_APPROVED', 'CO_APPROVED', 'RETURNED', 'REJECTED'])
 
-    elif role == 'COMPENSATION_HQ_SO':
-        qs = qs.filter(status__in=['CO_APPROVED', 'SO_REVIEWED', 'RETURNED', 'REJECTED'])
-
     elif role == 'COMPENSATION_HQ_CHIEF':
-        qs = qs.filter(status__in=['SO_REVIEWED', 'PENDING_CP_HRM', 'RETURNED', 'REJECTED'])
+        qs = qs.filter(status__in=['CO_APPROVED','CO_REVIEWED', 'PENDING_CP_HRM', 'RETURNED', 'REJECTED'])
 
     elif role == 'COMMITTEE_MEMBER':
         assigned_ids = (
@@ -656,9 +653,9 @@ def chief_review_case(request, case_id):
     except CompensationCase.DoesNotExist:
         return Response({'error': 'Case not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-    if case.status != 'CO_REVIEWED':
+    if case.status != 'CO_APPROVED':
         return Response(
-            {'error': f'Chief can only review CO_REVIEWED cases. Current: {case.status}.'},
+            {'error': f'Chief can only review CO_APPROVED cases. Current: {case.status}.'},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

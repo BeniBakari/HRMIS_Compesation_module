@@ -83,7 +83,7 @@ function PrintTemplate({
               lineHeight: "1.5", 
             }}
           >
-            TANZANIA POLICE FORCE
+            TANZANIA <span>&nbsp;</span> POLICE  <span>&nbsp;</span> FORCE
           </h1>
           <h2
             style={{
@@ -94,7 +94,7 @@ function PrintTemplate({
               lineHeight: "1.4",
             }}
           >
-            COMPENSATION ASSESSMENT REPORT
+            COMPENSATION  <span>&nbsp;</span> ASSESSMENT <span>&nbsp;</span> REPORT
           </h2>
           <div style={{ fontSize: "12px", marginTop: "10px" }}>
             Printed on: {new Date().toLocaleString()}
@@ -258,7 +258,7 @@ function PrintTemplate({
             {[
               ["Avg. Severity", `${reportAvgSeverity}%`],
               ["Total Members", reportTotalMembers],
-              ["Suggested Award", `TSh ${reportAgreedAmount.toLocaleString()}`],
+              ["Agreed Amount", `TSh ${reportSuggestedAmt.toLocaleString()}`],
             ].map(([label, value], i, arr) => (
               <div
                 key={label}
@@ -446,12 +446,12 @@ export default function CaseDetail() {
       )) ||
     (perms.hasRole("COMPENSATION_HQ") &&
       ["SUBMITTED", "UNDER_REVIEW"].includes(c.status?.trim().toUpperCase())) ||
-    (perms.hasRole("COMPENSATION_HQ_SO") &&
-      ["CO_APPROVED", "SO_REVIEWED"].includes(
+    (perms.hasRole("COMPENSATION_HQ_CHIEF") &&
+      ["CO_APPROVED", "CO_REVIEWED"].includes(
         c.status?.trim().toUpperCase(),
       )) ||
     (perms.hasRole("COMPENSATION_HQ_CHIEF") &&
-      ["SO_REVIEWED", "PENDING_CP_HRM"].includes(
+      ["CO_REVIEWED",'CO_APPROVED', "PENDING_CP_HRM"].includes(
         c.status?.trim().toUpperCase(),
       ));
 
@@ -785,8 +785,12 @@ export default function CaseDetail() {
         </div>
 
         <div style={{ flex: 1, minWidth: 0 }}>
-          {activeTab === "details" && (
-            <DetailsTab c={c} setPreviewDoc={setPreviewDoc} />
+          {activeTab === "details"   && <DetailsTab c={c} setPreviewDoc={setPreviewDoc} />}
+          {activeTab === "validate"  && <HQValidation caseId={c.case_id} currentStatus={c.status} onUpdate={fetchData} />}
+          {activeTab === "committee" && <CommitteeFormation caseId={c.case_id} caseRegion={c.region} onComplete={fetchData} readOnly={committeeReadOnly} committeeData={data.committee} />}
+          {activeTab === "assess"    && <AssessmentInput caseId={c.case_id} onComplete={fetchData} />}
+          {activeTab === "result"    && data.assessment && (
+            <CalculationView assessment={data.assessment} caseData={{ ...c, submitted_members: reportMembers }} />
           )}
           {activeTab === "validate" && (
             <HQValidation
@@ -880,7 +884,6 @@ function DetailsTab({ c, setPreviewDoc }) {
         (c.review_comments ||
           c.hq_comments ||
           c.co_comments ||
-          c.so_comments ||
           c.chief_comments) && (
           <div
             style={{
@@ -923,7 +926,6 @@ function DetailsTab({ c, setPreviewDoc }) {
                 {c.review_comments ||
                   c.hq_comments ||
                   c.co_comments ||
-                  c.so_comments ||
                   c.chief_comments}
               </p>
             </div>

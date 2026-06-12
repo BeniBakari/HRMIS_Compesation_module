@@ -22,7 +22,7 @@ class IsCompensationHQ(BasePermission):
     """HQ — wa kwanza, anavalidate documents."""
     message = 'Compensation HQ role required.'
     def has_permission(self, request, view):
-        return _ok(request.user, 'COMPENSATION_HQ', 'ADMIN')  # ← IMEBADILISHWA
+        return _ok(request.user, 'COMPENSATION_HQ', 'ADMIN') 
 
 class IsCompensationCO(BasePermission):
     """CO — wa pili, anapokea kutoka HQ."""

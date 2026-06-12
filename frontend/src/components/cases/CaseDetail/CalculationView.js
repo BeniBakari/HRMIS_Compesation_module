@@ -56,7 +56,7 @@ export default function CalculationView({ assessment, caseData }) {
             <DollarSign size={24} />
           </div>
           <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>Suggested Award</div>
+            <div style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>Agreed Amount</div>
             <div style={{ fontSize: "22px", fontWeight: 500 }}>TSh {suggestedAmt.toLocaleString()}</div>
           </div>
         </div>

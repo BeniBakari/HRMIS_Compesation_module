@@ -104,15 +104,11 @@ const HQ_DECISIONS = [
   { value: 'REJECTED', label: 'Reject Application',      icon: <XCircle size={18} />,       color: '#991b1b', bg: '#fee2e2' },
 ];
 const CO_DECISIONS = [
-  { value: 'APPROVED', label: 'Approve & Forward to SO', icon: <CheckCircle2 size={18} />, color: '#166534', bg: '#dcfce7' },
+  { value: 'APPROVED', label: 'Approve & Forward to Chief', icon: <CheckCircle2 size={18} />, color: '#166534', bg: '#dcfce7' },
   { value: 'RETURNED', label: 'Return to RPC',           icon: <Undo2 size={18} />,        color: '#92400e', bg: '#fef3c7' },
   { value: 'REJECTED', label: 'Reject Application',      icon: <XCircle size={18} />,       color: '#991b1b', bg: '#fee2e2' },
 ];
-const SO_DECISIONS = [
-  { value: 'APPROVED', label: 'Approve & Forward to Chief', icon: <CheckCircle2 size={18} />, color: '#166534', bg: '#dcfce7' },
-  { value: 'RETURNED', label: 'Return to RPC',              icon: <Undo2 size={18} />,        color: '#92400e', bg: '#fef3c7' },
-  { value: 'REJECTED', label: 'Reject Application',         icon: <XCircle size={18} />,       color: '#991b1b', bg: '#fee2e2' },
-];
+
 const CHIEF_DECISIONS = [
   { value: 'APPROVED', label: 'Submit to CP_HRM Office', icon: <Send size={18} />,   color: '#166534', bg: '#dcfce7' },
   { value: 'RETURNED', label: 'Return to RPC',        icon: <Undo2 size={18} />,  color: '#92400e', bg: '#fef3c7' },
@@ -150,14 +146,13 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
   const canAct = () => {
     if (isHQ)    return ['SUBMITTED', 'UNDER_REVIEW'].includes(currentStatus);
     if (isCO)    return currentStatus === 'HQ_APPROVED';
-    if (isChief) return currentStatus === 'CO_REVIEWED';
+    if (isChief) return currentStatus === 'CO_APPROVED';
     return false;
   };
 
   const getEndpoint = () => {
     if (isHQ)    return 'hq-review';
     if (isCO)    return 'co-review';
-    if (isSO)    return 'so-review';
     if (isChief) return 'chief-review';
   };
 
@@ -363,7 +358,7 @@ export default function HQValidation({ caseId, currentStatus, onUpdate }) {
         </div>
       )}
 
-      {/ & CHIEF: Read-only document list ───────────────────────────── */}
+      {/*  CHIEF: Read-only document list ───────────────────────────── */}
       {(isChief) && (
         <div className="info-section">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
