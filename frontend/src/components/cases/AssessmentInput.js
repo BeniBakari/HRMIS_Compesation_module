@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { casesApi } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { 
-  ClipboardList, Users, Edit3, CheckCircle2, Clock, 
-  AlertTriangle, Activity, UserPlus, Info, Check, 
-  ChevronRight, Loader2, TrendingUp, MessageSquare,
+   Users, Edit3, CheckCircle2, Clock, 
+  AlertTriangle, Activity, 
+  Loader2, TrendingUp, MessageSquare,
   DollarSign
 } from 'lucide-react';
 
@@ -44,15 +44,16 @@ export default function AssessmentInput({ caseId, onUpdate }) {
   };
 
   useEffect(() => { fetchDetails(); }, [caseId, user?.id]);
-
-  const isRPC = user?.role === 'RPC';
+  const isChairman = caseData?.committee_members?.some(
+    m => m.role === "CHAIRMAN" && m.user_id === user?.id
+  );
 
   const handleSubmit = async () => {
     if (caseData?.case_type === 'INJURY' && (injuryPct === '' || injuryPct < 0 || injuryPct > 100))
       return setError('Please specify a valid injury percentage between 0 and 100.');
     if (!severity)
       return setError('A severity rating must be selected for clinical records.');
-    if (isRPC && (agreedAmount === '' || isNaN(Number(agreedAmount)) || Number(agreedAmount) < 0))
+    if (isChairman && (agreedAmount === '' || isNaN(Number(agreedAmount)) || Number(agreedAmount) < 0))
       return setError('Please enter a valid agreed compensation amount.');
     
     setLoading(true); setError('');
@@ -61,7 +62,7 @@ export default function AssessmentInput({ caseId, onUpdate }) {
         injury_percentage: caseData.case_type === 'DEATH' ? 100 : Number(injuryPct),
         severity_class: severity, 
         assessment_notes: notes,
-        ...(isRPC && { agreed_amount: Number(agreedAmount) }),
+        ...(isChairman && { agreed_amount: Number(agreedAmount) }),
       });
       window.location.reload();
     } catch (err) { setError(err.message); }
@@ -75,7 +76,7 @@ export default function AssessmentInput({ caseId, onUpdate }) {
   const otherMembers = (caseData.committee_members || []).filter(m => m.user_id !== user?.id);
   const othersNotSubmitted = otherMembers.filter(m => !m.has_submitted_input);
   const allOthersSubmitted  = otherMembers.length > 0 && othersNotSubmitted.length === 0;
-  const isRpcBlocked = isRPC && !isCurrentUserSubmitted && !allOthersSubmitted;
+  const isChairmanBlocked = isChairman && !isCurrentUserSubmitted && !allOthersSubmitted;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px', animation: 'fadeIn 0.4s' }}>
@@ -158,7 +159,7 @@ export default function AssessmentInput({ caseId, onUpdate }) {
             </div>
           </div>
 
-        ) : isRpcBlocked ? (
+        ) : isChairmanBlocked ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             <div style={{ 
               display: 'flex', alignItems: 'flex-start', gap: '20px', padding: '25px', 
@@ -225,7 +226,7 @@ export default function AssessmentInput({ caseId, onUpdate }) {
             </div>
 
             {/* ── RPC ONLY: Agreed Compensation Amount ── */}
-            {isRPC && (
+            {isChairman && (
               <div style={{
                 padding: '25px', borderRadius: '16px',
                 background: '#f0f4ff', border: '1.5px solid #c7d2fe'

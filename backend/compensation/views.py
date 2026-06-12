@@ -327,7 +327,6 @@ def get_case(request, case_id):
         except ValueError:
             pass
 
-    print(case)
     return Response(CaseDetailSerializer(case, context={'request': request}).data)
 
 
@@ -732,6 +731,38 @@ def suggest_committee(request, case_id):
     }})
 
 
+    # Define rank priority (adjust to your RANK_CHOICES)
+RANK_PRIORITY = {
+        "IGP": 0,
+        "CP": 1,
+        "DCP": 2,
+        "SACP": 3,
+        "ACP": 4,
+        "SSP": 5,
+        "SP": 6,
+        "ASP": 7,
+        "INSP": 8,
+        "A/INSP": 9,
+        "RSM": 10,
+        "SSGT": 11,
+        "SGT": 12,
+        "CPL": 13,
+        "PC": 14,
+    }
+
+
+def force_number_value(force_number: str) -> int:
+    """
+    Extract numeric part from force number string like 'PF.15642'.
+    Returns a large number if parsing fails, so it won't override.
+    """
+    if not force_number:
+        return 999999
+    try:
+        return int("".join(ch for ch in force_number if ch.isdigit()))
+    except ValueError:
+        return 999999
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsCP_HRM])
 def form_committee(request, case_id):
@@ -756,14 +787,16 @@ def form_committee(request, case_id):
     now          = timezone.now()
     sig          = signature_hash(request.user.id, case.case_id, now)
 
-    users_cache     = {}
-    seen            = set()
-    created_members = []
-    member_users    = []
+
 
     try:
         with transaction.atomic():
             case.committee_members.all().delete()
+
+            users_cache     = {}
+            seen            = set()
+            created_members = []
+            member_users    = []
 
             for m in members_data:
                 user_id      = m.get('user_id')
@@ -811,6 +844,20 @@ def form_committee(request, case_id):
                 created_members.append(member)
                 member_users.append(user)
 
+            #  After creating all members, set CHAIRMAN based on highest rank
+            if created_members:
+                chairman = min(
+                    created_members,
+                    key=lambda cm: (
+                        RANK_PRIORITY.get(cm.user.rank, 999),
+                        force_number_value(cm.user.force_number)
+                    )
+                )
+                if chairman.role != "CHAIRMAN":
+                    chairman.role = "CHAIRMAN"
+                    chairman.save(update_fields=["role"])
+
+            # Case updates
             case.meeting_date       = data['meeting_date']
             case.igp_approved_by    = request.user
             case.igp_approved_at    = now
@@ -860,6 +907,7 @@ def form_committee(request, case_id):
     }, status=status.HTTP_201_CREATED)
 
 
+
 # ── Phase 4: Committee assessment ────────────────────────────────────────────
 
 @api_view(['POST'])
@@ -887,15 +935,15 @@ def submit_input(request, case_id):
                         status=status.HTTP_400_BAD_REQUEST)
 
     agreed_amount = None
-    if member.role == 'RPC':
+    if member.role == 'CHAIRMAN':
         other_members = case.committee_members.exclude(user=request.user)
         pending       = other_members.filter(assessment_input__isnull=True)
         if pending.exists():
             pending_names = list(pending.values_list('user__first_name', flat=True))
             return Response(
                 {
-                    'error':           'RPC_BLOCKED',
-                    'detail':          f'Kama RPC, lazima uwasilishe mwisho. Wanachama {pending.count()} bado hawajawasilisha.',
+                    'error':           'CHAIRMAN_BLOCKED',
+                    'detail':          f'As the CHAIRMAN, you must submit last. There are still ${pending.count()} members who have not submitted.',
                     'pending_count':   pending.count(),
                     'pending_members': pending_names,
                 },
@@ -905,7 +953,7 @@ def submit_input(request, case_id):
         raw_amount = request.data.get('agreed_amount')
         if raw_amount is None or raw_amount == '':
             return Response(
-                {'error': 'RPC lazima atoe agreed_amount (kiasi kilichokubalika).'},
+                {'error': 'CHAIRMAN responsible for supplying or stating the agreed amount.'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         try:
@@ -914,7 +962,7 @@ def submit_input(request, case_id):
                 raise ValueError
         except (ValueError, TypeError):
             return Response(
-                {'error': 'agreed_amount lazima iwe nambari sahihi (e.g. 650000).'},
+                {'error': 'Agreed amount must be a valid number (e.g. 650000).'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

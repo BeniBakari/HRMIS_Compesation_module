@@ -1459,7 +1459,7 @@ export default function CaseDetail() {
                     color: "#1c236d",
                   }}
                 >
-                  TSh {reportSuggestedAmt.toLocaleString()}
+                  TSh {reportAgreedAmount.toLocaleString()}
                 </div>
               </div>
             </div>
