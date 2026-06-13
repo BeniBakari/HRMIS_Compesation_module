@@ -791,32 +791,7 @@ export default function CaseDetail() {
           {activeTab === "assess"    && <AssessmentInput caseId={c.case_id} onComplete={fetchData} />}
           {activeTab === "result"    && data.assessment && (
             <CalculationView assessment={data.assessment} caseData={{ ...c, submitted_members: reportMembers }} />
-          )}
-          {activeTab === "validate" && (
-            <HQValidation
-              caseId={c.case_id}
-              currentStatus={c.status}
-              onUpdate={fetchData}
-            />
-          )}
-          {activeTab === "committee" && (
-            <CommitteeFormation
-              caseId={c.case_id}
-              caseRegion={c.incident_location}
-              onComplete={fetchData}
-              readOnly={committeeReadOnly}
-              committeeData={data.committee}
-            />
-          )}
-          {activeTab === "assess" && (
-            <AssessmentInput caseId={c.case_id} onComplete={fetchData} />
-          )}
-          {activeTab === "result" && data.assessment && (
-            <CalculationView
-              assessment={data.assessment}
-              caseData={{ ...c, submitted_members: reportMembers }}
-            />
-          )}
+          )}         
           {activeTab === "resubmit" && (
             <ResubmitPanel caseData={c} onUpdate={fetchData} />
           )}
