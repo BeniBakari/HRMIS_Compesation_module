@@ -88,8 +88,7 @@ export default function ResubmitPanel({ caseData, onUpdate }) {
             <CheckCircle2 size={36} color="#16a34a" />
           </div>
           <h3 style={{ margin: "0 0 10px", fontSize: "20px", fontWeight: 600, color: "#15803d" }}>
-            Kesi Imewasilishwa Upya!
-          </h3>
+        Case Re-filed!          </h3>
           <p style={{ margin: 0, fontSize: "14px", color: "#166534", lineHeight: "1.6" }}>
             Documents have been uploaded and the case has been sent to HQ for review..<br />
             You will be informed about the next decisions.
