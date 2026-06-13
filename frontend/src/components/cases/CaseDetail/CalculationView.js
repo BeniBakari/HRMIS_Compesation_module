@@ -12,8 +12,8 @@ export default function CalculationView({ assessment, caseData }) {
         )
       : 0;
 
-  const rpcMember = members.find((m) => m.role === "RPC");
-  const agreedAmount = rpcMember?.agreed_amount ? Number(rpcMember.agreed_amount) : null;
+  const chairman = members.find((m) => m.role === "CHAIRMAN");
+  const agreedAmount = chairman?.agreed_amount ? Number(chairman.agreed_amount) : null;
 
   const suggestedAmt =
     agreedAmount != null
@@ -56,7 +56,7 @@ export default function CalculationView({ assessment, caseData }) {
             <DollarSign size={24} />
           </div>
           <div style={{ position: "relative", zIndex: 1 }}>
-            <div style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>Suggested Award</div>
+            <div style={{ fontSize: "11px", fontWeight: 500, color: "rgba(255,255,255,0.6)", textTransform: "uppercase" }}>Agreed Amount</div>
             <div style={{ fontSize: "22px", fontWeight: 500 }}>TSh {suggestedAmt.toLocaleString()}</div>
           </div>
         </div>

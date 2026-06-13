@@ -3,7 +3,7 @@ import { authApi } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "./CaseList.css";
 import "./CaseSubmission.css";
-import { FaEye, FaPencilAlt, FaShield } from "react-icons/fa";
+import { FaEye, FaPencilAlt } from "react-icons/fa";
 import {
   ConfirmAlert,
   SuccessAlert,

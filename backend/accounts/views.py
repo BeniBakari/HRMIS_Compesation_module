@@ -132,13 +132,17 @@ def change_password(request, user_id=None):
                 status=status.HTTP_403_FORBIDDEN
             )
         target_user = get_object_or_404(User, id=user_id)
-
     serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # ✅ Save new password and clear must_change_password flag
     serializer.save()
+
+    # ✅ If the new password is the default, set the flag again
+    if request.data.get("new_password") == "!@#$1234":
+        target_user.must_change_password = True
+        target_user.save(update_fields=["must_change_password"])
 
     # ✅ Clear middleware session flag
     DefaultPasswordMiddleware.clear_flag(request)

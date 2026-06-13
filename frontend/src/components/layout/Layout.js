@@ -75,6 +75,7 @@ function ChangePasswordModal({ user, onClose }) {
       await authApi.changePassword(user.id, {
         current_password: currentPwd,
         new_password: newPwd,
+        confirm_password: confirmPwd,
       });
 
       onClose("success");

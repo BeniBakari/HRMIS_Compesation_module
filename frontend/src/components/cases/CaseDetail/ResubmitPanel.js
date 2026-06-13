@@ -16,7 +16,8 @@ export default function ResubmitPanel({ caseData, onUpdate }) {
       ? ["MEDICAL_REPORT", "OB_EXTRACT", "DEATH_CERTIFICATE"]
       : ["MEDICAL_REPORT", "OB_EXTRACT", "NATIONAL_ID", "PF3"];
 
-  // Docs zilizokataliwa na HQ
+  // rejected documents
+
   const rejectedTypes = new Set(
     (caseData.documents || [])
       .filter((d) => d.is_rejected)
@@ -61,7 +62,7 @@ export default function ResubmitPanel({ caseData, onUpdate }) {
       await casesApi.resubmit(caseData.case_id);
       setSuccess(true);
       setFiles({});
-      // Refresh baada ya sekunde 2 ili mtumiaji aone ujumbe
+      // Refresh after 2 minutes
       setTimeout(() => onUpdate(), 2000);
     } catch (e) {
       setError(e.response?.data?.error || e.message || "Submission failed. Try again.");

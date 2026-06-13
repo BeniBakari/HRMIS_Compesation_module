@@ -1,12 +1,16 @@
 import React, { useState } from "react";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { notifApi, authApi } from "../services/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { useNavigate } from "react-router-dom";
 import { faEye, faEyeSlash, faPencilAlt, faTimes, faSpinner } from "@fortawesome/free-solid-svg-icons";
 
 const API = process.env.REACT_APP_API_URL || "http://localhost:8000";
 
 export default function ChangePasswordModal() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const { mustChangePassword, clearMustChangePassword } = useAuth();
 
   const [form, setForm] = useState({
@@ -71,6 +75,11 @@ export default function ChangePasswordModal() {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+
   return (
     <div style={{
       position: "fixed", inset: 0,
@@ -97,9 +106,9 @@ export default function ChangePasswordModal() {
           <span style={{ fontWeight: 600, fontSize: "1.05rem" }}>
             Please Change Default Password
           </span>
-          <button disabled style={{
+          <button onClick={handleLogout}  style={{
             background: "rgba(255,255,255,0.15)", border: "none",
-            borderRadius: "6px", color: "#fff", cursor: "not-allowed",
+            borderRadius: "6px", color: "#fff", cursor: "pointer",
             width: "30px", height: "30px",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
@@ -164,10 +173,10 @@ export default function ChangePasswordModal() {
 
         {/* Footer */}
         <div style={{ padding: "0 28px 24px", display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-          <button disabled style={{
+          <button onClick={handleLogout}  style={{
             background: "#dc3545", color: "#fff", border: "none",
             borderRadius: "8px", padding: "10px 22px", fontWeight: 500,
-            cursor: "not-allowed", opacity: 0.6,
+            cursor: "pointer",
             display: "flex", alignItems: "center", gap: "6px",
           }}>
             <FontAwesomeIcon icon={faTimes} /> Close
