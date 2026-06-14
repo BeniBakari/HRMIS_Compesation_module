@@ -150,7 +150,7 @@ export default function Dashboard() {
                         <span>Recent Cases</span>
                     </div>
                     <div className="neu-search-box" style={{ cursor: 'pointer' }} onClick={() => navigate('/cases')}>
-                        <span style={{ fontSize: '0.9rem', color: '#667eea', fontWeight: 500 }}>View All <i className="fas fa-arrow-right"></i></span>
+                        <span style={{ fontSize: '0.9rem', color: '#1c236d', fontWeight: 500 }}>View All</span>
                     </div>
                 </div>
                 {recent.length === 0 ? (
@@ -198,7 +198,7 @@ export default function Dashboard() {
                     </p>
                 </div>
                 {perms.canSubmitCases && (
-                    <button className="neu-nav-btn" style={{ width: 'auto', padding: '0 20px', background: 'linear-gradient(135deg, #1c236d 0%, #2a3486 100%)', color: 'white', borderRadius: '10px' }} onClick={() => navigate('/cases/new')}>
+                    <button className="neu-nav-btn primary" style={{ width: 'auto', padding: '0 20px', background: 'linear-gradient(135deg, #1c236d 0%, #2a3486 100%)', color: 'white', borderRadius: '10px' }} onClick={() => navigate('/cases/new')}>
                         <i className="fas fa-file-medical" style={{ marginRight: '8px' }}></i> New Case
                     </button>
                 )}

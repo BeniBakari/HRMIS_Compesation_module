@@ -53,9 +53,9 @@
   padding: 25px;
   background: #e4e9f0;
   border-radius: 15px;
-  box-shadow: 
-  8px 8px 16px rgba(163, 177, 198, 0.5),
-  -8px -8px 16px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    8px 8px 16px rgba(163, 177, 198, 0.5),
+    -8px -8px 16px rgba(255, 255, 255, 0.5);
 }
 
 .section-title {
@@ -78,9 +78,9 @@
   height: 4px;
   background: #e4e9f0;
   border-radius: 2px;
-  box-shadow: 
-  inset 2px 2px 4px rgba(163, 177, 198, 0.4),
-  inset -2px -2px 4px rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 2px 2px 4px rgba(163, 177, 198, 0.4),
+    inset -2px -2px 4px rgba(255, 255, 255, 0.4);
 }
 
 /* ============================================
@@ -115,33 +115,34 @@
 
 @media (max-width: 1200px) {
   .row.four-columns {
-  grid-template-columns: repeat(2, 1fr);
-}
-  
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .row.three-columns {
-  grid-template-columns: repeat(2, 1fr);
-}
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 768px) {
+
   .row,
   .row.four-columns,
   .row.three-columns,
   .row.two-columns {
-  grid-template-columns: 1fr;
-}
-  
+    grid-template-columns: 1fr;
+  }
+
   .staff-registration {
-  padding: 0;
-}
-  
+    padding: 0;
+  }
+
   .card-body {
-  padding: 20px 15px;
-}
-  
+    padding: 20px 15px;
+  }
+
   .section {
-  padding: 20px;
-}
+    padding: 20px;
+  }
 }
 
 /* ============================================
@@ -170,16 +171,16 @@
   background: #e4e9f0;
   font-weight: 500;
   box-sizing: border-box;
-  box-shadow: 
-  inset 4px 4px 8px rgba(163, 177, 198, 0.5),
-  inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 4px 4px 8px rgba(163, 177, 198, 0.5),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.5);
 }
 
 .form-control:focus {
   outline: none;
-  box-shadow: 
-  inset 6px 6px 10px rgba(163, 177, 198, 0.6),
-  inset -6px -6px 10px rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 6px 6px 10px rgba(163, 177, 198, 0.6),
+    inset -6px -6px 10px rgba(255, 255, 255, 0.6);
 }
 
 .form-control::placeholder {
@@ -233,9 +234,9 @@ input[type="file"].form-control::-webkit-file-upload-button {
   cursor: pointer;
   font-weight: 500;
   margin-right: 12px;
-  box-shadow: 
-  4px 4px 8px rgba(163, 177, 198, 0.4),
-  -4px -4px 8px rgba(255, 255, 255, 0.4);
+  box-shadow:
+    4px 4px 8px rgba(163, 177, 198, 0.4),
+    -4px -4px 8px rgba(255, 255, 255, 0.4);
 }
 
 input[type="file"].form-control::-webkit-file-upload-button:hover {
@@ -252,25 +253,25 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
   border-radius: 12px;
   font-size: 14px;
   font-weight: 500;
-  box-shadow: 
-  6px 6px 12px rgba(163, 177, 198, 0.4),
-  -6px -6px 12px rgba(255, 255, 255, 0.4);
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.4),
+    -6px -6px 12px rgba(255, 255, 255, 0.4);
 }
 
 .alert-error {
   color: #721c24;
   background: #ffd4d4;
-  box-shadow: 
-  inset 4px 4px 8px rgba(255, 82, 82, 0.3),
-  inset -4px -4px 8px rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 4px 4px 8px rgba(255, 82, 82, 0.3),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.3);
 }
 
 .alert-success {
   color: #155724;
   background: #d4edda;
-  box-shadow: 
-  inset 4px 4px 8px rgba(40, 167, 69, 0.3),
-  inset -4px -4px 8px rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 4px 4px 8px rgba(40, 167, 69, 0.3),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.3);
 }
 
 /* ============================================
@@ -314,24 +315,24 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
 .btn-primary {
   background: #ffffff;
   color: #1c236d;
-  box-shadow: 
-  8px 8px 16px rgba(163, 177, 198, 0.5),
-  -8px -8px 16px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    8px 8px 16px rgba(163, 177, 198, 0.5),
+    -8px -8px 16px rgba(255, 255, 255, 0.5);
 }
 
 .btn-primary:hover:not(:disabled) {
   background: #151a50;
-  box-shadow: 
-  10px 10px 20px rgba(163, 177, 198, 0.6),
-  -10px -10px 20px rgba(255, 255, 255, 0.6);
+  box-shadow:
+    10px 10px 20px rgba(163, 177, 198, 0.6),
+    -10px -10px 20px rgba(255, 255, 255, 0.6);
   transform: translateY(-2px);
 }
 
 .btn-primary:active:not(:disabled) {
   background: #0f1441;
-  box-shadow: 
-  inset 6px 6px 12px rgba(163, 177, 198, 0.5),
-  inset -6px -6px 12px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 6px 6px 12px rgba(163, 177, 198, 0.5),
+    inset -6px -6px 12px rgba(255, 255, 255, 0.5);
   transform: translateY(0);
 }
 
@@ -339,9 +340,9 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
-  box-shadow: 
-  4px 4px 8px rgba(163, 177, 198, 0.3),
-  -4px -4px 8px rgba(255, 255, 255, 0.3);
+  box-shadow:
+    4px 4px 8px rgba(163, 177, 198, 0.3),
+    -4px -4px 8px rgba(255, 255, 255, 0.3);
 }
 
 /* Hide the secondary button (Reset button) */
@@ -364,23 +365,24 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg);
-}
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ============================================
   VALIDATION STYLES
   ============================================ */
 .form-group.has-error .form-control {
-  box-shadow: 
-  inset 4px 4px 8px rgba(239, 68, 68, 0.4),
-  inset -4px -4px 8px rgba(255, 255, 255, 0.4);
+  box-shadow:
+    inset 4px 4px 8px rgba(239, 68, 68, 0.4),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.4);
 }
 
 .form-group.has-error .form-control:focus {
-  box-shadow: 
-  inset 6px 6px 10px rgba(239, 68, 68, 0.5),
-  inset -6px -6px 10px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    inset 6px 6px 10px rgba(239, 68, 68, 0.5),
+    inset -6px -6px 10px rgba(255, 255, 255, 0.5);
 }
 
 .error-message {
@@ -410,9 +412,9 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
   border: none;
   border-radius: 12px;
   margin-top: 12px;
-  box-shadow: 
-  6px 6px 12px rgba(163, 177, 198, 0.5),
-  -6px -6px 12px rgba(255, 255, 255, 0.5);
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.5),
+    -6px -6px 12px rgba(255, 255, 255, 0.5);
 }
 
 /* ============================================
@@ -420,49 +422,49 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
   ============================================ */
 @media (max-width: 1024px) {
   .staff-registration {
-  padding: 0;
-}
-  
+    padding: 0;
+  }
+
   .card-body {
-  padding: 25px 20px;
-}
-  
+    padding: 25px 20px;
+  }
+
   .section {
-  padding: 20px;
-}
+    padding: 20px;
+  }
 }
 
 @media (max-width: 640px) {
   .staff-registration {
-  padding: 0;
-}
-  
+    padding: 0;
+  }
+
   .card-body {
-  padding: 20px 15px;
-}
-  
+    padding: 20px 15px;
+  }
+
   .card-header {
-  padding: 20px 15px 15px 15px;
-}
-  
+    padding: 20px 15px 15px 15px;
+  }
+
   .card-header h2 {
-  font-size: 22px;
-}
-  
+    font-size: 22px;
+  }
+
   .section {
-  padding: 18px;
-  margin-bottom: 20px;
-}
-  
+    padding: 18px;
+    margin-bottom: 20px;
+  }
+
   .btn-primary {
-  padding: 12px 30px;
-  font-size: 15px;
-  min-width: 180px;
-}
-  
+    padding: 12px 30px;
+    font-size: 15px;
+    min-width: 180px;
+  }
+
   .card-footer {
-  padding: 25px 15px 35px 15px;
-}
+    padding: 25px 15px 35px 15px;
+  }
 }
 
 /* ============================================
@@ -470,19 +472,19 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
   ============================================ */
 @media print {
   .staff-registration {
-  box-shadow: none;
-  background: white;
-}
-  
+    box-shadow: none;
+    background: white;
+  }
+
   .section {
-  box-shadow: none;
-  background: white;
-  border: 1px solid #ddd;
-}
-  
+    box-shadow: none;
+    background: white;
+    border: 1px solid #ddd;
+  }
+
   .btn {
-  display: none;
-}
+    display: none;
+  }
 }
 
 /* ============================================
@@ -490,9 +492,9 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
   ============================================ */
 @-moz-document url-prefix() {
   select.form-control {
-  background-image: none;
-  padding-right: 16px;
-}
+    background-image: none;
+    padding-right: 16px;
+  }
 }
 
 /* ============================================
@@ -500,10 +502,10 @@ input[type="file"].form-control::-webkit-file-upload-button:hover {
   ============================================ */
 @media (prefers-reduced-motion: reduce) {
   * {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
-}
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ============================================
@@ -542,9 +544,9 @@ input[type="number"].form-control {
 
 /* Success state for form controls */
 .form-group.has-success .form-control {
-  box-shadow: 
-  inset 4px 4px 8px rgba(40, 167, 69, 0.3),
-  inset -4px -4px 8px rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 4px 4px 8px rgba(40, 167, 69, 0.3),
+    inset -4px -4px 8px rgba(255, 255, 255, 0.3);
 }
 
 /* Focus visible for accessibility */

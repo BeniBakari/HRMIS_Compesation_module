@@ -907,6 +907,13 @@
   cursor: not-allowed;
 }
 
+.neu-nav-btn.primary:hover:not(:disabled) {
+  box-shadow: 0 4px 15px rgba(28, 35, 109, 0.4);
+  color: white;
+  transform: translateY(-2px);
+}
+
+
 .neu-nav-btn i {
   font-size: 14px;
 }
